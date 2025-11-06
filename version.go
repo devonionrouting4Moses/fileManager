@@ -13,8 +13,8 @@ import (
 const (
 	Version     = "0.1.0"
 	AppName     = "FileManager"
-	ReleaseURL  = "https://api.github.com/repos/YOUR_USERNAME/filemanager/releases/latest"
-	DownloadURL = "https://github.com/YOUR_USERNAME/filemanager/releases/latest"
+	ReleaseURL  = "https://api.github.com/repos/devonionrouting4Moses/fileManager/releases/latest"
+	DownloadURL = "https://github.com/devonionrouting4Moses/fileManager/releases/latest"
 )
 
 type ReleaseInfo struct {
