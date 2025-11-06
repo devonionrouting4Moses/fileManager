@@ -1,0 +1,213 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux builds
+          - os: ubuntu-latest
+            target: linux-amd64
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            target: linux-arm64
+            goos: linux
+            goarch: arm64
+          
+          # macOS builds
+          - os: macos-latest
+            target: darwin-amd64
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            target: darwin-arm64
+            goos: darwin
+            goarch: arm64
+          
+          # Windows builds
+          - os: windows-latest
+            target: windows-amd64
+            goos: windows
+            goarch: amd64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Build Rust library
+        run: cargo build --release
+
+      - name: Build Go binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+        run: |
+          go build -ldflags="-s -w" -o filemanager${{ matrix.goos == 'windows' && '.exe' || '' }} .
+
+      - name: Prepare distribution
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          mkdir -p dist/${{ matrix.target }}
+          
+          # Copy binary
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cp filemanager.exe dist/${{ matrix.target }}/
+            cp target/release/filemanager.dll dist/${{ matrix.target }}/ || echo "DLL not found"
+          else
+            cp filemanager dist/${{ matrix.target }}/
+            if [ "${{ matrix.goos }}" = "darwin" ]; then
+              cp target/release/libfilemanager.dylib dist/${{ matrix.target }}/ || \
+              cp target/release/libfilemanager.so dist/${{ matrix.target }}/libfilemanager.dylib
+            else
+              cp target/release/libfilemanager.so dist/${{ matrix.target }}/
+            fi
+          fi
+          
+          # Copy documentation
+          cp README.md dist/${{ matrix.target }}/ || true
+          cp INSTALL.md dist/${{ matrix.target }}/ || true
+          cp LICENSE dist/${{ matrix.target }}/ || true
+          
+          # Create installer scripts
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cat > dist/${{ matrix.target }}/install.bat << 'EOF'
+          @echo off
+          echo Installing FileManager...
+          set INSTALL_DIR=%ProgramFiles%\FileManager
+          if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+          copy /Y filemanager.exe "%INSTALL_DIR%\"
+          copy /Y filemanager.dll "%INSTALL_DIR%\" 2>nul
+          setx /M PATH "%PATH%;%INSTALL_DIR%"
+          echo Installation complete!
+          pause
+          EOF
+          else
+            cat > dist/${{ matrix.target }}/install.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          echo "Installing FileManager..."
+          sudo cp filemanager /usr/local/bin/
+          sudo chmod +x /usr/local/bin/filemanager
+          if [ "$(uname -s)" = "Darwin" ]; then
+            sudo cp libfilemanager.dylib /usr/local/lib/ 2>/dev/null || \
+            sudo cp libfilemanager.so /usr/local/lib/libfilemanager.dylib
+          else
+            sudo cp libfilemanager.so /usr/local/lib/
+            sudo ldconfig
+          fi
+          echo "Installation complete!"
+          EOF
+            chmod +x dist/${{ matrix.target }}/install.sh
+          fi
+
+      - name: Create archive
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          cd dist
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            7z a filemanager-${VERSION}-${{ matrix.target }}.zip ${{ matrix.target }}/
+          else
+            tar czf filemanager-${VERSION}-${{ matrix.target }}.tar.gz ${{ matrix.target }}/
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: filemanager-${{ matrix.target }}
+          path: dist/filemanager-*-${{ matrix.target }}.*
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec sha256sum {} \; > ../checksums.txt
+          cd ..
+          cat checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+            checksums.txt
+          body: |
+            ## FileManager ${{ github.ref_name }}
+            
+            ### 🎉 What's New
+            
+            <!-- Add release notes here -->
+            
+            ### 📥 Installation
+            
+            **Linux:**
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${{ github.ref_name }}-linux-amd64.tar.gz | tar xz
+            cd linux-amd64
+            sudo ./install.sh
+            ```
+            
+            **macOS:**
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${{ github.ref_name }}-darwin-amd64.tar.gz | tar xz
+            cd darwin-amd64
+            sudo ./install.sh
+            ```
+            
+            **Windows:**
+            Download the `.zip` file and run `install.bat` as Administrator.
+            
+            ### 📋 Checksums
+            
+            SHA256 checksums are included in `checksums.txt`
+            
+            ### 🐛 Bug Reports
+            
+            Please report issues at: https://github.com/${{ github.repository }}/issues
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,20 @@
+# Rust
+target/
+Cargo.lock
+
+# Go
+filemanager
+*.exe
+*.test
+*.out
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
