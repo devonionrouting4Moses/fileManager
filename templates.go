@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -131,9 +130,9 @@ func getGoProjectTemplate() StructureTemplate {
 			"docs",
 		},
 		Files: map[string]string{
-			"go.mod":     "module myproject\n\ngo 1.21\n",
-			"README.md":  "# My Go Project\n\nProject description here.\n",
-			"Makefile":   ".PHONY: build run test\n\nbuild:\n\tgo build -o bin/app ./cmd/app\n",
+			"go.mod":    "module myproject\n\ngo 1.21\n",
+			"README.md": "# My Go Project\n\nProject description here.\n",
+			"Makefile":  ".PHONY: build run test\n\nbuild:\n\tgo build -o bin/app ./cmd/app\n",
 			"cmd/app/main.go": `package main
 
 import "fmt"
@@ -287,7 +286,7 @@ router = APIRouter()
 @router.get("/health")
 def health_check():
     return {"status": "healthy"}`,
-			"app/models/__init__.py": "",
+			"app/models/__init__.py":  "",
 			"app/schemas/__init__.py": "",
 			"requirements.txt": `fastapi==0.104.1
 uvicorn[standard]==0.24.0
@@ -577,8 +576,8 @@ class MyHomePage extends StatelessWidget {
     );
   }
 }`,
-			"README.md":    "# Flutter Application\n",
-			".gitignore":   "*.class\n.dart_tool/\nbuild/\n",
+			"README.md":             "# Flutter Application\n",
+			".gitignore":            "*.class\n.dart_tool/\nbuild/\n",
 			"analysis_options.yaml": "include: package:flutter_lints/flutter.yaml\n",
 		},
 	}
@@ -649,8 +648,8 @@ function App() {
 export default App;`,
 			"src/styles/index.css": "body {\n  margin: 0;\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto';\n}\n",
 			"src/styles/App.css":   ".App {\n  text-align: center;\n  padding: 20px;\n}\n",
-			".gitignore":            "node_modules/\nbuild/\n.env\n",
-			"README.md":             "# React Application\n",
+			".gitignore":           "node_modules/\nbuild/\n.env\n",
+			"README.md":            "# React Application\n",
 		},
 	}
 }
@@ -836,63 +835,165 @@ func ParseTreeStructure(input string) ([]string, map[string]string, error) {
 	lines := strings.Split(input, "\n")
 	var dirs []string
 	files := make(map[string]string)
+
+	// Track current path at each depth
 	pathStack := []string{}
+	rootSet := false
 
-	for _, line := range lines {
-		if strings.TrimSpace(line) == "" {
+	for _, rawLine := range lines {
+		// Skip empty lines
+		if strings.TrimSpace(rawLine) == "" {
 			continue
 		}
 
-		// Remove tree characters and count depth
-		cleaned := regexp.MustCompile(`[\s\p{P}]+`).ReplaceAllString(line, " ")
-		parts := strings.Fields(cleaned)
-		if len(parts) == 0 {
+		// Count indentation spaces BEFORE any tree characters
+		indent := 0
+		for _, ch := range rawLine {
+			if ch == ' ' {
+				indent++
+			} else if ch == '\t' {
+				indent += 4
+			} else {
+				// Hit non-whitespace
+				break
+			}
+		}
+
+		// Remove leading whitespace
+		trimmed := strings.TrimLeft(rawLine, " \t")
+
+		// Count tree depth by looking at the tree structure
+		// ├── or └── at start = direct child
+		// │   followed by ├── or └── = nested child
+		treeDepth := 0
+		temp := trimmed
+		for {
+			if strings.HasPrefix(temp, "│") {
+				treeDepth++
+				temp = strings.TrimPrefix(temp, "│")
+				temp = strings.TrimLeft(temp, " ")
+			} else {
+				break
+			}
+		}
+
+		// Remove all tree characters
+		cleaned := trimmed
+		for {
+			old := cleaned
+			cleaned = strings.TrimPrefix(cleaned, "│")
+			cleaned = strings.TrimPrefix(cleaned, "├──")
+			cleaned = strings.TrimPrefix(cleaned, "├─")
+			cleaned = strings.TrimPrefix(cleaned, "└──")
+			cleaned = strings.TrimPrefix(cleaned, "└─")
+			cleaned = strings.TrimLeft(cleaned, " \t")
+			if old == cleaned {
+				break
+			}
+		}
+
+		// Skip if only tree characters
+		if cleaned == "" {
 			continue
 		}
 
-		name := parts[len(parts)-1]
-		depth := countDepth(line)
+		// Extract name (remove comments)
+		name := cleaned
+		if idx := strings.Index(cleaned, "#"); idx != -1 {
+			name = strings.TrimSpace(cleaned[:idx])
+		}
 
-		// Adjust stack to current depth
+		// Remove trailing slash
+		name = strings.TrimRight(name, "/")
+		name = strings.TrimSpace(name)
+
+		if name == "" {
+			continue
+		}
+
+		// Determine depth
+		var depth int
+		if !rootSet {
+			// First non-empty line is the root
+			depth = 0
+			rootSet = true
+		} else {
+			// Use tree depth (count of │ characters)
+			// If there's a ├ or └ directly at start (after spaces), it's depth 1
+			// Each │ before the ├/└ adds another level
+			if strings.HasPrefix(trimmed, "├") || strings.HasPrefix(trimmed, "└") {
+				depth = 1
+			} else {
+				depth = treeDepth + 1
+			}
+		}
+
+		// Adjust path stack to current depth
 		if depth < len(pathStack) {
 			pathStack = pathStack[:depth]
 		}
 
 		// Build full path
 		var fullPath string
-		if len(pathStack) > 0 {
-			fullPath = strings.Join(append(pathStack, name), "/")
-		} else {
+		if len(pathStack) == 0 {
 			fullPath = name
+		} else {
+			fullPath = strings.Join(append(pathStack, name), "/")
 		}
 
-		// Remove trailing slash
-		fullPath = strings.TrimSuffix(fullPath, "/")
-		name = strings.TrimSuffix(name, "/")
+		// Determine if file or directory
+		isFile := hasFileExtension(name)
 
-		// Check if it's a file or directory
-		if strings.Contains(name, ".") && !strings.HasSuffix(line, "/") {
+		if isFile {
 			files[fullPath] = ""
 		} else {
 			dirs = append(dirs, fullPath)
-			pathStack = append(pathStack[:depth], name)
+			// Update path stack for directories only
+			if depth >= len(pathStack) {
+				pathStack = append(pathStack, name)
+			} else {
+				pathStack = append(pathStack[:depth], name)
+			}
 		}
 	}
 
 	return dirs, files, nil
 }
 
-func countDepth(line string) int {
-	depth := 0
-	for _, r := range line {
-		switch r {
-		case '├', '└':
-			depth++
-		case '│', '─', ' ':
-			// These characters don't affect depth
-		default:
-			return depth
+// hasFileExtension checks if a name has a file extension
+func hasFileExtension(name string) bool {
+	fileExtensions := []string{
+		".java", ".go", ".py", ".js", ".ts", ".jsx", ".tsx",
+		".c", ".cpp", ".h", ".hpp", ".cs", ".rb", ".php",
+		".html", ".css", ".scss", ".sass", ".json", ".xml",
+		".yaml", ".yml", ".md", ".txt", ".sh", ".bat", ".ps1",
+		".sql", ".rs", ".kt", ".swift", ".m", ".mm", ".r",
+		".pl", ".lua", ".dart", ".vue", ".svelte", ".class",
+		".exe", ".dll", ".so", ".jar", ".war", ".properties",
+	}
+
+	nameLower := strings.ToLower(name)
+
+	for _, ext := range fileExtensions {
+		if strings.HasSuffix(nameLower, ext) {
+			return true
 		}
 	}
-	return depth
+
+	// Generic extension pattern check
+	if idx := strings.LastIndex(name, "."); idx > 0 && idx < len(name)-1 {
+		ext := name[idx+1:]
+		if len(ext) >= 2 && len(ext) <= 10 {
+			isAlphaNum := true
+			for _, ch := range ext {
+				if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) {
+					isAlphaNum = false
+					break
+				}
+			}
+			return isAlphaNum
+		}
+	}
+
+	return false
 }

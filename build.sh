@@ -44,8 +44,29 @@ build_platform() {
     
     mkdir -p ${PLATFORM_DIR}
     
-    # Build Go binary
-    env GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=1 go build -ldflags="-s -w" -o ${PLATFORM_DIR}/${OUTPUT_NAME} .
+    # Build Go binary with Windows-specific settings
+	if [ "$GOOS" = "windows" ]; then
+		echo "Building for Windows - using Windows-specific implementation"
+		# First build the Windows executable
+		env GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+		go build -ldflags="-s -w" -o ${PLATFORM_DIR}/${OUTPUT_NAME} .
+		
+		# If that fails, try the more complex build with excluded files
+		if [ $? -ne 0 ]; then
+			echo "Standard build failed, trying with file exclusions..."
+			find . -name "*.go" -not -name "*_windows.go" -not -name "*_test.go" -not -name "*_unix.go" -not -name "helper_windows.go" -not -name "main.go" -not -name "version.go" -not -name "webserver.go" -not -name "templates.go" > build_files.txt
+			echo "main.go" >> build_files.txt
+			echo "version.go" >> build_files.txt
+			echo "webserver.go" >> build_files.txt
+			echo "templates.go" >> build_files.txt
+			
+			env GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+			go build -ldflags="-s -w" -o ${PLATFORM_DIR}/${OUTPUT_NAME} $(cat build_files.txt)
+			rm -f build_files.txt
+		fi
+	else
+		env GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=1 go build -ldflags="-s -w" -o ${PLATFORM_DIR}/${OUTPUT_NAME} .
+	fi
     
     if [ $? -eq 0 ]; then
         # Copy Rust library
