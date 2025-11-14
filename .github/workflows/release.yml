@@ -76,6 +76,7 @@ jobs:
       - name: Prepare distribution
         shell: bash
         run: |
+          # Extract version from tag (remove 'v' prefix)
           VERSION=${GITHUB_REF#refs/tags/v}
           mkdir -p dist/${{ matrix.target }}
           
@@ -133,19 +134,22 @@ jobs:
       - name: Create archive
         shell: bash
         run: |
+          # Extract version from tag (remove 'v' prefix)
           VERSION=${GITHUB_REF#refs/tags/v}
           cd dist
+          
+          # Create archive with naming pattern: filemanager-{VERSION}-{TARGET}.{EXT}
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            7z a filemanager-${VERSION}-${{ matrix.target }}.zip ${{ matrix.target }}/
+            7z a ../filemanager-${VERSION}-${{ matrix.target }}.zip ${{ matrix.target }}/
           else
-            tar czf filemanager-${VERSION}-${{ matrix.target }}.tar.gz ${{ matrix.target }}/
+            tar czf ../filemanager-${VERSION}-${{ matrix.target }}.tar.gz ${{ matrix.target }}/
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: filemanager-${{ matrix.target }}
-          path: dist/filemanager-*-${{ matrix.target }}.*
+          path: filemanager-*-${{ matrix.target }}.*
 
   release:
     name: Create Release
@@ -160,19 +164,24 @@ jobs:
         with:
           path: artifacts
 
+      - name: Move artifacts to root
+        run: |
+          mkdir -p release-files
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec mv {} release-files/ \;
+
       - name: Generate checksums
         run: |
-          cd artifacts
-          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec sha256sum {} \; > ../checksums.txt
+          cd release-files
+          sha256sum * > ../checksums.txt
           cd ..
+          echo "=== Checksums ==="
           cat checksums.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.zip
+            release-files/*
             checksums.txt
           body: |
             ## FileManager ${{ github.ref_name }}
@@ -183,22 +192,29 @@ jobs:
             
             ### 📥 Installation
             
-            **Linux:**
+            **Linux (amd64):**
             ```bash
-            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${{ github.ref_name }}-linux-amd64.tar.gz | tar xz
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${GITHUB_REF#refs/tags/v}-linux-amd64.tar.gz | tar xz
             cd linux-amd64
             sudo ./install.sh
             ```
             
-            **macOS:**
+            **macOS (Apple Silicon):**
             ```bash
-            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${{ github.ref_name }}-darwin-amd64.tar.gz | tar xz
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${GITHUB_REF#refs/tags/v}-darwin-arm64.tar.gz | tar xz
+            cd darwin-arm64
+            sudo ./install.sh
+            ```
+            
+            **macOS (Intel):**
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/filemanager-${GITHUB_REF#refs/tags/v}-darwin-amd64.tar.gz | tar xz
             cd darwin-amd64
             sudo ./install.sh
             ```
             
             **Windows:**
-            Download the `.zip` file and run `install.bat` as Administrator.
+            Download the `.zip` file for your architecture and run `install.bat` as Administrator.
             
             ### 📋 Checksums
             

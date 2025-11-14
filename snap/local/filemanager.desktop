@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=FileManager
+GenericName=File Manager
+Comment=Modern file manager with Rust+Go backend
+Icon=${SNAP}/usr/share/icons/hicolor/256x256/apps/filemanager.png
+Exec=filemanager
+Terminal=false
+Categories=System;FileTools;FileManager;Utility;
+Keywords=file;manager;files;browser;explorer;
+StartupNotify=true
+StartupWMClass=FileManager

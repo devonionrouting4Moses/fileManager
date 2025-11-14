@@ -1,0 +1,99 @@
+name: filemanager
+base: core22
+version: '0.1.2'
+summary: Modern file manager with Rust+Go backend
+description: |
+  FileManager is a cross-platform file manager built with Rust and Go,
+  offering high performance and modern features for file management.
+  
+  Features:
+  - Fast file operations with Rust backend
+  - Intuitive user interface
+  - Cross-platform compatibility
+  - Advanced file search and filtering
+  - Batch operations support
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  filemanager:
+    command: usr/local/bin/filemanager
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-bind
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - unity7
+
+parts:
+  rust-deps:
+    plugin: nil
+    build-packages:
+      - curl
+      - build-essential
+    override-build: |
+      # Install Rust
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      . $HOME/.cargo/env
+      rustc --version
+
+  filemanager:
+    after: [rust-deps]
+    plugin: nil
+    source: .
+    build-packages:
+      - golang-go
+      - build-essential
+      - pkg-config
+    stage-packages:
+      - libc6
+      - libgcc-s1
+      - libstdc++6
+    override-build: |
+      set -e
+      
+      # Build Rust library
+      . $HOME/.cargo/env
+      cargo build --release
+      
+      # Build Go binary
+      export CGO_ENABLED=1
+      export CGO_LDFLAGS="-L${SNAPCRAFT_PART_BUILD}/target/release"
+      export CGO_CFLAGS="-I${SNAPCRAFT_PART_BUILD}"
+      go build -ldflags="-s -w" -o filemanager .
+      
+      # Install files
+      install -D -m 755 filemanager ${SNAPCRAFT_PART_INSTALL}/usr/local/bin/filemanager
+      
+      # Install Rust library
+      if [ -f target/release/libfilemanager.so ]; then
+        install -D -m 644 target/release/libfilemanager.so ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/libfilemanager.so
+      fi
+      
+      # Install documentation
+      if [ -f README.md ]; then
+        install -D -m 644 README.md ${SNAPCRAFT_PART_INSTALL}/usr/share/doc/filemanager/README.md
+      fi
+      
+      if [ -f LICENSE ]; then
+        install -D -m 644 LICENSE ${SNAPCRAFT_PART_INSTALL}/usr/share/doc/filemanager/LICENSE
+      fi
+
+  desktop-file:
+    plugin: dump
+    source: snap/local/
+    source-type: local
+    organize:
+      filemanager.desktop: usr/share/applications/filemanager.desktop
+      filemanager.png: usr/share/icons/hicolor/256x256/apps/filemanager.png
