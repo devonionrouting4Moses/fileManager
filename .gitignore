@@ -8,6 +8,10 @@ filemanager
 *.test
 *.out
 
+# Shell scripts
+*.sh
+*.bash
+
 # Editor
 .vscode/
 .idea/
@@ -31,6 +35,7 @@ Thumbs.db
 *.app
 
 # Build output
+dist
 /dist/
 /target/
 /filemanager
@@ -121,6 +126,3 @@ Thumbs.db
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
-# Go workspace file
-go.work
