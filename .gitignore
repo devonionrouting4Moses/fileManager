@@ -18,3 +18,109 @@ filemanager
 # OS
 .DS_Store
 Thumbs.db
+
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.app
+
+# Build output
+/dist/
+/target/
+/filemanager
+/filemanager.exe
+/filemanager_*.deb
+/filemanager-*.tar.gz
+/filemanager-*.zip
+
+# Go workspace file
+go.work
+
+# Dependency directories
+/vendor/
+/go/pkg/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Local development files
+.env
+*.env.local
+*.env.*.local
+
+# Snap packaging
+/parts/
+/prime/
+/stage/
+/snap/.snapcraft/
+*.snap
+/*.snap
+/*.snap-build
+/*.snap-build-state
+/*.snapcraft/
+/*.snapcraft.state
+
+# Debian packaging
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.debhelper.log
+/debian/*.substvars
+/debian/*/
+/debian/debhelper-build-stamp
+/debian/filemanager.debhelper.log
+/debian/filemanager.substvars
+/debian/filemanager/
+/debian/tmp/
+/filemanager_0.1.2_amd64/
+
+# Rust specific
+**/target/
+**/Cargo.lock
+
+# Go specific
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
