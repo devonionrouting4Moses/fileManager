@@ -1,338 +1,797 @@
-# 🗂️ FileManager - Hybrid Rust + Go File Management Tool
+# FileManager v2 - Dual-Mode File Management Tool
 
-A high-performance, terminal-based file and folder manager that combines the safety and speed of Rust with the concurrency and simplicity of Go.
+A powerful, modern file management tool that works in both **terminal** and **web browser** modes. Built with a clean backend-frontend architecture: Rust handles low-level file operations while Go provides the user interface.
 
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
 
-- **Rust Layer**: Handles all performance-critical file operations (create, delete, rename, copy, move, permissions)
-- **Go Layer**: Provides the CLI interface, user input handling, and calls Rust functions via CGO/FFI
-- **Communication**: Rust code compiled to `.so` shared library, linked with Go using CGO
+```
+┌─────────────────────────────────────────────────────────┐
+│                   FileManager v2                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌──────────────────┐          ┌──────────────────┐   │
+│  │  Terminal UI     │          │   Web Browser    │   │
+│  │  (Interactive    │          │   (Modern UI)    │   │
+│  │   CLI Menu)      │          │   on :8080       │   │
+│  └────────┬─────────┘          └────────┬─────────┘   │
+│           │                             │             │
+│           └─────────────┬───────────────┘             │
+│                         │                             │
+│                    Go Frontend                        │
+│              (file_manager/ directory)                │
+│                                                       │
+│                    CGO FFI Bridge                     │
+│                                                       │
+│                   Rust Backend                        │
+│              (rust_ffi/ directory)                    │
+│                                                       │
+│  - File Operations    - Directory Management         │
+│  - Permissions        - System Calls                 │
+│  - Copy/Move/Delete   - Create/Rename                │
+│                                                       │
+└─────────────────────────────────────────────────────────┘
+```
 
-## ✨ Features
+## 📦 Project Structure
 
-1. **Create Folder** - Create directories with full path support
-2. **Create File** - Create new empty files
+```
+file_manager_v2/
+├── file_manager/                # Go Frontend (UI Layer)
+│   ├── cmd/app/                 # Application entry point
+│   ├── internal/
+│   │   ├── ffi/                 # CGO bindings to Rust
+│   │   ├── handler/             # HTTP handlers & web server
+│   │   ├── service/             # Business logic
+│   │   └── repository/          # Data access
+│   ├── pkg/version/             # Version management
+│   ├── scripts/                 # Build & install scripts
+│   ├── go.mod                   # Go dependencies
+│   └── README.md                # Frontend documentation
+│
+├── rust_ffi/                    # Rust Backend (Core Logic)
+│   ├── crates/
+│   │   ├── core/                # Core library with FFI
+│   │   │   ├── src/
+│   │   │   │   ├── lib.rs
+│   │   │   │   ├── common/      # Shared types
+│   │   │   │   ├── ffi/         # C FFI wrappers
+│   │   │   │   └── operations/  # File operations
+│   │   │   └── Cargo.toml
+│   │   └── cli/                 # CLI tool (fsops)
+│   │       ├── src/main.rs
+│   │       └── Cargo.toml
+│   ├── Cargo.toml               # Workspace config
+│   └── README.md                # Backend documentation
+│
+├── filemanager_frontend/        # Web UI Assets
+│   ├── index.html
+│   ├── css/style.css
+│   ├── js/main.js
+│   └── images/
+│
+├── .github/workflows/
+│   └── release.yml              # CI/CD Release Pipeline
+│
+├── Makefile                     # Build automation
+├── build.sh                     # Cross-platform build script
+└── README.md                    # This file
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Rust**: 1.70+ (for backend)
+- **Go**: 1.24+ (for frontend)
+- **Make**: For build automation
+- **Build tools**: `gcc`, `g++`, `build-essential` (Linux)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd file_manager_v2
+
+# Build everything
+make all
+
+# Run in terminal mode
+./filemanager
+
+# Or run in web mode
+./filemanager --web
+```
+
+## 🎯 Features
+
+### Terminal Mode
+- ✅ Interactive CLI with numbered menu (0-9)
+- ✅ Single and batch file/folder operations
+- ✅ 12 pre-built project templates
+- ✅ Interactive structure builder
+- ✅ Custom structure definitions
+- ✅ Tree structure parsing
+- ✅ Cross-platform support (Linux, macOS, Windows)
+
+### Web Mode
+- ✅ Modern, responsive web interface
+- ✅ All terminal features available in browser
+- ✅ Real-time operation results
+- ✅ Beautiful card-based UI
+- ✅ No installation required (just open browser)
+- ✅ Automatic browser launch
+- ✅ REST API endpoints
+
+### Core Operations
+- 📁 **Create** - Files and folders
+- 🗑️ **Delete** - Remove files and directories
+- ✏️ **Rename** - Rename files and directories
+- 📦 **Copy** - Copy files and directories (recursive)
+- 🚚 **Move** - Move files and directories
+- 🔐 **Permissions** - Change file permissions (Unix)
+- 🏗️ **Structures** - Create complex project structures
+
+## 📋 Available Operations
+
+```
+┌────────────────────────────────────────┐
+│           Available Operations         │
+├────────────────────────────────────────┤
+│  1️⃣  Create Folder                     │
+│  2️⃣  Create File                       │
+│  3️⃣  Rename File/Folder                │
+│  4️⃣  Delete File/Folder                │
+│  5️⃣  Change Permissions                │
+│  6️⃣  Move File/Folder                  │
+│  7️⃣  Copy File/Folder                  │
+│  8️⃣  Create Structure (Multi-entity)   │
+│  9️⃣  Launch Web Interface              │
+│  0️⃣  Exit                              │
+└────────────────────────────────────────┘
+```
+
+## 🛠️ Building
+
+### Using Make (Recommended)
+
+```bash
+# Build everything (Rust + Go)
+make all
+
+# Build only Rust backend
+make rust
+
+# Build only Go frontend
+make go
+
+# Development build (with debug symbols)
+make dev
+
+# Build for all platforms
+make build-all
+
+# Clean build artifacts
+make clean
+```
+
+### Manual Build
+
+```bash
+# Build Rust library
+cd rust_ffi
+cargo build --release -p fs-operations-core
+
+# Build Go binary
+cd ../file_manager
+CGO_ENABLED=1 \
+CGO_LDFLAGS="-L../rust_ffi/target/release -lfs_operations_core -ldl -lpthread -lm" \
+go build -ldflags="-s -w" -o ../filemanager ./cmd/app
+```
+
+## 🏃 Running
+
+### Terminal Mode (Default)
+
+```bash
+# Interactive menu
+./filemanager
+
+# Show version
+./filemanager --version
+
+# Check for updates
+./filemanager --update
+
+# Show help
+./filemanager --help
+```
+
+### Web Mode
+
+```bash
+# Start web server (opens browser automatically)
+./filemanager --web
+
+# Server runs on: http://localhost:8080
+```
+
+## 🌐 Web Interface
+
+### Access
+
+Open your browser to: `http://localhost:8080`
+
+### API Endpoints
+
+- `GET /api/health` - Server health check
+- `GET /api/templates` - Get available templates
+- `POST /api/operation` - Execute file operations
+
+### Features
+
+1. **Create Folder** - Single or multiple folders
+2. **Create File** - Files with auto-directory creation
 3. **Rename** - Rename files or folders
-4. **Delete** - Safely delete files or folders (with confirmation)
-5. **Change Permissions** - Modify Unix file permissions (chmod)
-6. **Move** - Move files or folders to new locations
-7. **Copy** - Copy files or entire directory trees
-8. **Exit** - Clean exit from the application
+4. **Delete** - Delete with confirmation
+5. **Permissions** - Change file/folder permissions
+6. **Move** - Move files or folders
+7. **Copy** - Copy files or folders
+8. **Create Structure** - Three modes:
+   - **Templates**: 12 pre-built project templates
+   - **Custom**: Define with `d:` and `f:` prefixes
+   - **Parse Tree**: Paste tree-format structure
 
----
+## 📦 Project Templates
 
-## 📥 Installation
+1. Java Traits Project Structure
+2. Standard Go Project Structure
+3. Rust Project with Workspace
+4. Python Flask Web Application
+5. Python FastAPI REST API
+6. Java RMI Distributed Application
+7. Java Swing Desktop Application
+8. Java Spring Boot REST API
+9. Flutter Mobile Application
+10. React Frontend Application
+11. Next.js Full-Stack Application
+12. Simple HTML/CSS/JavaScript Website
 
-### Ubuntu/Debian (Recommended)
+## 💡 Examples
 
-#### Via Snap Store (Easiest - Auto Updates)
+### Terminal Mode - Create Project Structure
+
+```bash
+./filemanager
+Enter your choice: 8
+Select option: 2  # Standard Go Project
+📁 Enter root directory name: my-go-project
+```
+
+### Web Mode - Custom Structure
+
+1. Click "Create Structure" card
+2. Switch to "Custom" tab
+3. Enter:
+```
+d:myproject
+d:myproject/src
+d:myproject/tests
+f:myproject/README.md
+f:myproject/src/main.go
+```
+4. Click "Create Structure"
+
+### Web Mode - Parse Tree
+
+1. Click "Create Structure" card
+2. Switch to "Parse Tree" tab
+3. Paste:
+```
+myproject/
+├── src/
+│   ├── main.go
+│   └── utils.go
+├── tests/
+│   └── test_main.go
+└── README.md
+```
+4. Click "Parse & Create"
+
+## 🔗 Component Documentation
+
+### Go Frontend (`file_manager/`)
+
+The user-facing application layer that provides both terminal and web interfaces.
+
+- **Terminal UI**: Interactive menu-driven interface
+- **Web Server**: HTTP server with REST API
+- **FFI Bridge**: CGO bindings to Rust backend
+
+See [file_manager/README.md](./file_manager/README.md) for detailed documentation.
+
+### Rust Backend (`rust_ffi/`)
+
+Low-level file system operations with C FFI bindings.
+
+- **Core Library**: `fs-operations-core` - Handles all file operations
+- **CLI Tool**: `fsops` - Command-line interface to operations
+- **FFI Layer**: C-compatible function signatures
+- **Operations**: Create, delete, rename, move, copy, permissions
+
+See [rust_ffi/README.md](./rust_ffi/README.md) for detailed documentation.
+
+### Web Frontend (`filemanager_frontend/`)
+
+Modern, responsive web interface.
+
+- **HTML**: Semantic structure
+- **CSS**: TailwindCSS styling
+- **JavaScript**: Interactive functionality
+- **API Integration**: REST API communication
+
+See [filemanager_frontend/README.md](./filemanager_frontend/README.md) for detailed documentation.
+
+## 🔧 Development
+
+### Run Tests
+
+```bash
+make test
+```
+
+### Format Code
+
+```bash
+make fmt
+```
+
+### Lint Code
+
+```bash
+make lint
+```
+
+### Generate Documentation
+
+```bash
+make docs
+```
+
+### Setup Development Environment
+
+```bash
+make setup-dev
+```
+
+## 📦 Installation
+
+### From Source (Recommended for Development)
+
+```bash
+# Clone the repository
+git clone https://github.com/DevChigarlicMoses/FileManager.git
+cd file_manager_v2
+
+# Build and install
+make install
+
+# Uninstall
+make uninstall
+```
+
+### System-wide Installation (Manual)
+
+```bash
+# Build first
+make all
+
+# Copy binary
+sudo cp filemanager /usr/local/bin/
+
+# Copy Rust library
+sudo cp rust_ffi/target/release/libfs_operations_core.so /usr/local/lib/
+
+# Update library cache (Linux)
+sudo ldconfig
+
+# Make executable
+sudo chmod +x /usr/local/bin/filemanager
+
+# Verify installation
+filemanager --version
+```
+
+### Platform-Specific Installation
+
+#### Ubuntu/Debian
+```bash
+# Via DEB package (when available)
+wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v0.1.2/filemanager_0.1.2_amd64.deb
+sudo dpkg -i filemanager_0.1.2_amd64.deb
+sudo apt install -f  # Fix dependencies if needed
+```
+
+#### Snap Store (Coming Soon)
 ```bash
 sudo snap install filemanager
+# Auto-updates every 6 hours
 ```
 
-#### Via DEB Package
+#### Windows
 ```bash
 # Download latest release
-wget https://github.com/devonionrouting4Moses/fileManager/releases/download/v0.1.2/filemanager_0.1.2_amd64.deb
-
-# Install
-sudo dpkg -i filemanager_0.1.2_amd64.deb
-
-# Fix dependencies if needed
-sudo apt install -f
-```
-
-#### Via PPA (Coming Soon)
-```bash
-sudo add-apt-repository ppa:mosesmuranja/filemanager
-sudo apt update
-sudo apt install filemanager
-```
-
-### Windows
-
-```bash
-# Download the latest Windows release
-# Visit: https://github.com/devonionrouting4Moses/fileManager/releases/latest
+# Visit: https://github.com/DevChigarlicMoses/FileManager/releases/latest
 # Download: filemanager-0.1.2-windows-amd64.zip
-
-# Extract and run
-filemanager.exe
+# Extract and run: filemanager.exe
 ```
 
-### Other Linux Distributions
-
-Download the appropriate package from [Releases](https://github.com/devonionrouting4Moses/fileManager/releases/latest):
-- **Arch Linux**: `filemanager-0.1.2-linux-amd64.tar.gz`
-- **Fedora/RHEL**: `filemanager-0.1.2-linux-amd64.tar.gz`
-- **Any Linux**: Snap Store (works everywhere)
+#### macOS
+```bash
+# Via Homebrew (coming soon)
+brew install filemanager
+```
 
 ### Verify Installation
 
 ```bash
 filemanager --version
+which filemanager
+ldd $(which filemanager)  # Check library dependencies
 ```
 
----
+## 🚀 CI/CD Pipeline
 
-## 🚀 Usage
+### GitHub Actions Release Workflow
 
-Simply run the command:
+The project includes a comprehensive release workflow (`.github/workflows/release.yml`) that:
+
+1. **Builds** for multiple platforms:
+   - Linux (amd64, arm64)
+   - macOS (amd64, arm64)
+   - Windows (amd64)
+
+2. **Packages** distributions with:
+   - Go binary
+   - Rust library
+   - CLI tool
+   - Documentation
+   - Installer scripts
+
+3. **Creates** GitHub releases with:
+   - Platform-specific archives
+   - SHA256 checksums
+   - Installation instructions
+   - Release notes
+
+### Triggering a Release
 
 ```bash
-filemanager
+# Create a version tag
+git tag v0.1.2
+git push origin v0.1.2
+
+# GitHub Actions automatically:
+# - Builds for all platforms
+# - Creates release packages
+# - Publishes to GitHub Releases
 ```
 
-Then follow the interactive menu to perform file operations.
+## ⚙️ Configuration
 
-## 📖 Usage Examples
+### Web Server Port
 
-### Creating a Folder
-```
-Enter your choice: 1
-📁 Enter folder path: /tmp/myproject
-✅ Folder created: /tmp/myproject
+Edit `file_manager/internal/handler/webserver.go`:
+```go
+port := "8080"  // Change to your preferred port
 ```
 
-### Changing Permissions
-```
-Enter your choice: 5
-🔒 Enter path: /tmp/script.sh
-Enter permissions (octal, e.g., 755): 755
-✅ Permissions changed: /tmp/script.sh (0755)
-```
+### Frontend Location
 
-### Copying Files
-```
-Enter your choice: 7
-📋 Enter source path: /tmp/original.txt
-Enter destination path: /tmp/backup.txt
-✅ Copied: /tmp/original.txt -> /tmp/backup.txt
+Edit `file_manager/internal/handler/webserver.go`:
+```go
+staticDir := "./filemanager_frontend"  // Change path
 ```
 
----
+### Build Version
 
-## 🔄 Updates
+Edit `Makefile`:
+```makefile
+VERSION := 0.1.2  # Update version
+```
 
-- **Snap**: Updates automatically every 6 hours
-  ```bash
-  # Force update
-  sudo snap refresh filemanager
-  ```
+## 🐛 Troubleshooting
 
-- **DEB Package**: Download new version from [releases](https://github.com/devonionrouting4Moses/fileManager/releases/latest)
-  ```bash
-  wget https://github.com/devonionrouting4Moses/fileManager/releases/download/v0.1.3/filemanager_0.1.3_amd64.deb
-  sudo dpkg -i filemanager_0.1.3_amd64.deb
-  ```
+### Build Issues
 
-- **PPA**: 
-  ```bash
-  sudo apt update && sudo apt upgrade
-  ```
-
----
-
-## 🔧 For Developers
-
-Want to build from source or contribute? See [DEVELOPMENT.md](DEVELOPMENT.md)
-
-### Quick Development Setup
-
+**CGO Errors**
 ```bash
-# Prerequisites
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-# Install Go from: https://golang.org/dl/
+# Ensure Rust library is built
+cd rust_ffi && cargo build --release -p fs-operations-core
 
-# Clone and build
-git clone https://github.com/devonionrouting4Moses/fileManager.git
-cd fileManager
-make
+# Verify CGO_ENABLED=1
+export CGO_ENABLED=1
+
+# Check library path
+ls -la rust_ffi/target/release/libfs_operations_core.so
 ```
 
----
+**Missing Dependencies**
+```bash
+# Linux
+sudo apt-get install build-essential
 
-## 🛠️ Project Structure
+# macOS
+xcode-select --install
 
-```
-filemanager/
-├── main.go              # CLI menu and user interaction
-├── operations.go        # Go wrappers for Rust FFI calls
-├── go.mod              # Go module definition
-├── src/
-│   └── lib.rs          # Rust FFI functions
-├── Cargo.toml          # Rust dependencies and build config
-├── Makefile            # Build automation
-├── snap/               # Snap package configuration
-│   ├── snapcraft.yaml  # Snap build manifest
-│   └── local/          # Desktop files and icons
-├── debian-package-build.sh  # DEB package builder
-└── README.md           # This file
+# Windows
+# Install Visual Studio Build Tools
 ```
 
----
+### Runtime Issues
 
-## 🔒 Security Features
+**Web Server Won't Start**
+```bash
+# Check if port is in use
+lsof -i :8080  # macOS/Linux
+netstat -ano | findstr :8080  # Windows
+
+# Kill process or change port
+```
+
+**Frontend Not Loading**
+- Check browser console (F12)
+- Verify `filemanager_frontend` directory exists
+- Check file permissions
+
+**Permission Errors**
+```bash
+# Use sudo for protected directories
+sudo ./filemanager
+
+# Or use user-writable location
+./filemanager /home/user/my_files
+```
+
+## � Security Features
 
 - **Safe FFI**: All string conversions checked for UTF-8 validity
 - **Memory Safety**: Rust prevents buffer overflows and memory leaks
 - **Permission Validation**: Unix permission checks before operations
 - **Confirmation Prompts**: Destructive operations require confirmation
-- **Snap Confinement**: Sandboxed execution with controlled permissions
-
----
+- **Sandboxed Execution**: Snap confinement with controlled permissions (when available)
+- **No Runtime Dependencies**: Compiled native binaries with minimal attack surface
 
 ## ⚡ Performance Benefits
 
 - **Rust Core**: Zero-cost abstractions, no garbage collection overhead
 - **Concurrent Go**: Easy to extend with goroutines for batch operations
 - **Native Code**: Compiled binaries with no runtime dependencies
-- **Small Binary**: Optimized builds under 10MB
+- **Small Binary**: Optimized builds under 15MB
+- **Efficient FFI**: Minimal overhead in Rust-Go communication
 
----
+### Benchmarks
 
-## 🐛 Troubleshooting
-
-### Snap Permission Issues
-
-If you can't access certain directories:
+Run Rust benchmarks:
 ```bash
-# Connect home directory access
-sudo snap connect filemanager:home
-
-# Connect removable media access
-sudo snap connect filemanager:removable-media
-
-# View all connections
-snap connections filemanager
+make bench
 ```
 
-### DEB Installation Issues
+### Optimization
 
-```bash
-# If dependencies are missing
-sudo apt install -f
+- Rust backend uses release optimizations (`opt-level = 3`)
+- Go binary stripped of debug symbols (`-ldflags="-s -w"`)
+- Link-time optimization enabled in Rust
+- Efficient FFI communication layer
+- Minimal memory footprint
 
-# If library not found
-sudo ldconfig
+## 📋 System Requirements
 
-# Check installation
-which filemanager
-ldd $(which filemanager)
-```
-
-### Windows Issues
-
-- Ensure you have the latest Visual C++ Redistributable installed
-- Extract the entire ZIP contents before running
-- Run as Administrator if permission errors occur
-
-### General Issues
-
-- Check [GitHub Issues](https://github.com/devonionrouting4Moses/fileManager/issues)
-- Read [INSTALL.md](INSTALL.md) for detailed installation help
-- View logs: `snap logs filemanager` (for Snap installations)
-
----
-
-## 📊 System Requirements
-
-- **OS**: Linux (Ubuntu 20.04+, Debian 11+, any modern distro), Windows 10+
+- **OS**: Linux (Ubuntu 20.04+, Debian 11+, any modern distro), macOS 10.15+, Windows 10+
 - **Architecture**: x86_64 (amd64) or ARM64
 - **RAM**: 512 MB minimum, 1 GB recommended
 - **Disk Space**: 50 MB for installation
 - **Dependencies**: 
   - Linux: libc6 >= 2.31 (usually pre-installed)
+  - macOS: None (standalone executable)
   - Windows: None (standalone executable)
 
----
+## 🔄 Updates & Upgrade Strategy
 
-## 🤝 Contributing
+FileManager uses **Semantic Versioning (SemVer)** with a **hybrid notification approach** to keep you informed about updates while respecting your workflow.
 
-We welcome contributions! Here's how to help:
+### Understanding Version Numbers
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests: `make test`
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+```
+Version Format: MAJOR.MINOR.PATCH
+Example: v1.5.0
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+🔧 PATCH (v1.5.Z) - Bug fixes, security patches
+   → Silent/automatic installation
+   → Minimal disruption
 
----
+✨ MINOR (v1.Y.0) - New features, improvements
+   → Subtle in-app notification
+   → Update at your convenience
+
+🚀 MAJOR (vX.0.0) - Breaking changes, redesigns
+   → Full-screen notification
+   → Review required before updating
+```
+
+### Checking for Updates
+
+```bash
+# Check for available updates
+filemanager --update
+
+# The app will:
+# 1. Detect your current version
+# 2. Compare with latest release
+# 3. Display appropriate notification based on change type
+# 4. Provide download and installation instructions
+```
+
+### Update Methods
+
+#### From Source
+```bash
+# Pull latest changes
+git pull origin main
+
+# Rebuild
+make clean && make all
+```
+
+#### Snap Store (Coming Soon)
+```bash
+# Auto-updates every 6 hours
+# Force update
+sudo snap refresh filemanager
+```
+
+#### DEB Package
+```bash
+# Download new version
+wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v0.1.3/filemanager_0.1.3_amd64.deb
+sudo dpkg -i filemanager_0.1.3_amd64.deb
+```
+
+### Update Notifications
+
+**PATCH Updates** (e.g., v1.0.8 → v1.0.9)
+```
+🔧 PATCH UPDATE AVAILABLE: v1.0.8 → v1.0.9
+─ Security & Bug Fixes ─
+
+✅ This is a safe, backwards-compatible update.
+💡 It will be installed automatically on next restart.
+```
+
+**MINOR Updates** (e.g., v1.2.5 → v1.3.0)
+```
+════════════════════════════════════════════════════════════
+║ ✨ NEW FEATURES AVAILABLE: v1.2.5 → v1.3.0
+║ ────────────────────────────────────────────────────────
+║ 📊 Update Type: MINOR (New Features & Improvements)
+║ 📈 User Impact: Low to Moderate
+║ 🔄 Update Strategy: Subtle In-App Notification
+║ ────────────────────────────────────────────────────────
+║
+║ 💡 Tip: Check the release notes to see what's new!
+║ 🔗 You can update at your convenience.
+════════════════════════════════════════════════════════════
+```
+
+**MAJOR Updates** (e.g., v1.5.0 → v2.0.0)
+```
+══════════════════════════════════════════════════════════════════
+║                  🚀 MAJOR UPGRADE AVAILABLE                     ║
+║                                                                  ║
+║  Current Version: v1.5.0
+║  Available Version: v2.0.0
+║                                                                  ║
+║  ⚠️  IMPORTANT: This is a major upgrade with breaking changes.  ║
+║  ✅ Action Required: Please review release notes before updating.
+║  🔗 You may need to reconfigure settings or migrate data.
+══════════════════════════════════════════════════════════════════
+```
+
+### Migration for Major Updates
+
+When upgrading between major versions (e.g., v1.x → v2.0), see [MIGRATION.md](./docs/MIGRATION.md) for:
+- Pre-migration checklist
+- Step-by-step migration guide
+- Configuration migration
+- Troubleshooting
+- Rollback instructions
+
+### Update Strategy Details
+
+For comprehensive information about how FileManager handles updates, see [UPDATE_STRATEGY.md](./docs/UPDATE_STRATEGY.md):
+- Semantic versioning explained
+- Notification strategies by update type
+- Release notes best practices
+- Security considerations
+- Implementation details
 
 ## 📄 License
 
-MIT License - feel free to use in your projects!
+MIT OR Apache-2.0
 
-See [LICENSE](LICENSE) for full details.
+## 🤝 Contributing
 
----
+Contributions are welcome! Please:
 
-## 🙏 Acknowledgments
-
-- Built with **Rust** for safety and performance
-- Powered by **Go** for simplicity and concurrency
-- Uses **CGO/FFI** for seamless interop
-- Packaged with **Snapcraft** for universal Linux distribution
-- Available via **APT** for Debian/Ubuntu users
-
----
-
-## 📚 Documentation
-
-- [Installation Guide](INSTALL.md) - Detailed installation instructions
-- [Usage Guide](USAGE_GUIDE.md) - Complete feature documentation
-- [Development Guide](DEVELOPMENT.md) - Build from source
-- [Advanced Features](ADVANCED_FEATURES.md) - Power user tips
-- [Publishing Guide](PACKAGING.md) - For package maintainers
-
----
-
-## 🌟 Star History
-
-If you find FileManager useful, please consider giving it a star! ⭐
-
----
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `make test`
+5. Submit a pull request
 
 ## 📞 Support
 
-- **Bug Reports**: [GitHub Issues](https://github.com/devonionrouting4Moses/fileManager/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/devonionrouting4Moses/fileManager/discussions)
+- **Bug Reports**: [GitHub Issues](https://github.com/DevChigarlicMoses/FileManager/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/DevChigarlicMoses/FileManager/discussions)
 - **Email**: moses.muranja@strathmore.edu
-- **Documentation**: [Wiki](https://github.com/devonionrouting4Moses/fileManager/wiki)
-
----
+- **Documentation**: See component README files
+- **Wiki**: [GitHub Wiki](https://github.com/DevChigarlicMoses/FileManager/wiki)
 
 ## 🔗 Links
 
-- **Snap Store**: [snapcraft.io/filemanager](https://snapcraft.io/filemanager)
-- **GitHub**: [github.com/devonionrouting4Moses/fileManager](https://github.com/devonionrouting4Moses/fileManager)
-- **Releases**: [Latest Release](https://github.com/devonionrouting4Moses/fileManager/releases/latest)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-
----
+- **GitHub**: [github.com/DevChigarlicMoses/FileManager](https://github.com/DevChigarlicMoses/FileManager)
+- **Releases**: [Latest Release](https://github.com/DevChigarlicMoses/FileManager/releases/latest)
+- **Snap Store**: [snapcraft.io/filemanager](https://snapcraft.io/filemanager) (coming soon)
+- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
 
 ## 🎯 Roadmap
 
+### Completed ✅
 - [x] Basic file operations (create, delete, rename, copy, move)
 - [x] Permission management
-- [x] Snap Store distribution
-- [x] DEB package distribution
+- [x] Terminal mode with interactive menu
+- [x] Web mode with modern UI
+- [x] Dual-mode (terminal + web) support
+- [x] Multi-platform builds (Linux, macOS, Windows)
+- [x] Project templates (12 templates)
+- [x] Custom structure definitions
+- [x] Tree structure parsing
+
+### In Progress 🚀
+- [ ] Snap Store distribution
+- [ ] DEB package distribution
 - [ ] PPA for easier APT installation
+- [ ] Homebrew support for macOS
+
+### Planned 📋
 - [ ] Batch operations support
 - [ ] File search functionality
 - [ ] Archive support (zip, tar.gz)
-- [ ] GUI version
-- [ ] macOS support via Homebrew
 - [ ] File preview capabilities
+- [ ] Undo/Redo functionality
+- [ ] Favorites/Bookmarks
+- [ ] File comparison tool
+- [ ] Sync operations
+- [ ] Cloud storage integration
 
-See [ROADMAP.md](ROADMAP.md) for detailed future plans.
+See [ROADMAP.md](./ROADMAP.md) for detailed future plans.
+
+## 🌟 Related Projects
+
+- **v1**: [FileManager v1](../file_manager_v1/) - Original terminal-only version
+- **Rust FFI**: [fs-operations-core](./rust_ffi/) - Core library documentation
+- **Web Frontend**: [filemanager_frontend](./filemanager_frontend/) - Web UI assets
+
+## 📈 Version History
+
+- **v0.1.2** - Current version (dual-mode with web interface)
+- **v0.1.1** - Previous release
+- **v0.1.0** - Initial release
 
 ---
 
-**Happy File Managing! 🚀**
+**FileManager v2 - Making file management simple, powerful, and accessible** 🎉
 
-Made with ❤️ by Moses Muranja and contributors
+Built with ❤️ by Moses Muranja and contributors
+
+Powered by **Rust** for safety and performance, **Go** for simplicity and concurrency, and modern web technologies for the UI.

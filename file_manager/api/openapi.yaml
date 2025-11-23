@@ -1,0 +1,74 @@
+openapi: 3.0.0
+info:
+  title: FileManager API
+  version: 0.1.2
+  description: REST API for file management operations
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+
+  /templates:
+    get:
+      summary: Get available project templates
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+
+  /operation:
+    post:
+      summary: Execute file operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operation:
+                  type: string
+                  enum: [createFolder, createFile, rename, delete, chmod, move, copy]
+                paths:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Operation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string

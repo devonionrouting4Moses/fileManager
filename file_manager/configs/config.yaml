@@ -1,0 +1,26 @@
+# FileManager Configuration
+
+app:
+  name: FileManager
+  version: 0.1.2
+  environment: production
+
+server:
+  host: localhost
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+
+logging:
+  level: info
+  format: json
+  output: stdout
+
+features:
+  web_interface: true
+  auto_updates: true
+  templates: true
+
+rust_library:
+  path: ./rust_ffi/target/release
+  name: libfs_operations_core

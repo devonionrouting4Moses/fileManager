@@ -1,11 +1,17 @@
 name: filemanager
 base: core24
-version: '0.1.2'
+version: '2.0.0'
 summary: Modern file manager with Rust+Go backend
 description: |
-  FileManager is a cross-platform file manager built with Rust and Go,
-  offering high performance and modern features for file management.
+  FileManager v2 is a major upgrade with improved performance and new features.
+  Built with Rust and Go for cross-platform offering high performance and modern features for file management.
   
+  New in v2:
+  - Improved Rust FFI integration
+  - Enhanced performance
+  - Better file operation handling
+  - Modern architecture
+
   Features:
   - Fast file operations with Rust backend
   - Intuitive user interface

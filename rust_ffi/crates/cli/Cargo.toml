@@ -1,0 +1,21 @@
+# [package]
+# name = "cli"
+# version = "0.1.0"
+# edition = "2021"
+# 
+[package]
+name = "fs-operations-cli"
+version = {workspace = true}
+edition = {workspace = true}
+authors = {workspace = true}
+license = {workspace = true}
+repository = {workspace = true}
+
+[[bin]]
+name = "fsops"
+path = "src/main.rs"
+
+[dependencies]
+fs-operations-core = { path = "../core" }
+anyhow = { workspace = true }
+clap = { version = "4.5", features = ["derive"] }

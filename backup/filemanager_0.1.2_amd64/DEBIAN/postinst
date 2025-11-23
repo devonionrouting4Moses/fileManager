@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+# Update library cache
+ldconfig
+
+echo "FileManager installed successfully!"
+echo "Run 'filemanager' to start the application."
+
+exit 0

@@ -1,0 +1,16 @@
+Package: filemanager
+Version: 0.1.2
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Moses Muranja <moses.muranja@strathmore.edu>
+Depends: libc6 (>= 2.31)
+Homepage: https://github.com/devonionrouting4Moses/fileManager
+Description: A modern file manager with Rust+Go backend
+ FileManager is a cross-platform file manager built with Rust and Go,
+ offering high performance and modern features for file management.
+ .
+ Features:
+  - Fast file operations
+  - Intuitive user interface
+  - Cross-platform compatibility

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=FileManager
+Comment=Modern file manager
+Exec=/usr/local/bin/filemanager
+Icon=filemanager
+Terminal=false
+Categories=System;FileTools;FileManager;
+Keywords=file;manager;files;
