@@ -10,15 +10,70 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 const (
-	Version   = "0.1.2"
-	AppName   = "FileManager"
-	repoOwner = "devonionrouting4Moses"
-	repoName  = "fileManager"
+	AppName        = "FileManager"
+	repoOwner      = "devonionrouting4Moses"
+	repoName       = "fileManager"
+	defaultVersion = "2.0.0"
 )
+
+// versionOnce ensures version is loaded only once
+var (
+	versionOnce   sync.Once
+	cachedVersion string
+)
+
+// Version returns the application version from VERSION file or default
+func GetVersion() string {
+	versionOnce.Do(func() {
+		cachedVersion = loadVersionFromFile()
+	})
+	return cachedVersion
+}
+
+// loadVersionFromFile reads version from VERSION file in project root
+func loadVersionFromFile() string {
+	// Try multiple possible locations for VERSION file
+	possiblePaths := []string{
+		// From executable directory
+		filepath.Join(getExecutableDir(), "..", "..", "VERSION"),
+		// From current working directory
+		"VERSION",
+		// From home directory
+		filepath.Join(os.Getenv("HOME"), ".filemanager", "VERSION"),
+		// Fallback
+		"/etc/filemanager/VERSION",
+	}
+
+	for _, path := range possiblePaths {
+		if data, err := os.ReadFile(path); err == nil {
+			version := strings.TrimSpace(string(data))
+			if version != "" {
+				return version
+			}
+		}
+	}
+
+	// Return default if no VERSION file found
+	return defaultVersion
+}
+
+// getExecutableDir returns the directory of the running executable
+func getExecutableDir() string {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	return filepath.Dir(exePath)
+}
+
+// Version is a variable that holds the current version
+// Deprecated: Use GetVersion() instead for dynamic version loading
+var Version = GetVersion()
 
 var (
 	releaseURL   = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
@@ -52,22 +107,28 @@ func ShowVersion() {
 	fmt.Printf("Download: %s\n", GetDownloadURL())
 }
 
-// ShowBanner displays the application banner
+// ShowBanner displays the application banner with styled terminal output
 func ShowBanner() {
+	// ANSI color codes
+	cyan := "\033[36m"
+	green := "\033[32m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
 	versionStr := fmt.Sprintf("v%s", Version)
-	bannerWidth := 40
+	bannerWidth := 50
 
-	contentStr := fmt.Sprintf("🗂️  %s %s (Rust+Go)", AppName, versionStr)
-	visualLen := len(contentStr) - 2
-	padding := (bannerWidth - visualLen) / 2
+	// Title section with cyan border
+	fmt.Printf("%s%s┌%s┐%s\n", cyan, bold, strings.Repeat("─", bannerWidth-2), reset)
+	fmt.Printf("%s%s│ FILEMANAGER - HYBRID FILE OPERATIONS SYSTEM%s │%s\n", cyan, bold, strings.Repeat(" ", bannerWidth-47), reset)
+	fmt.Printf("%s%s│ Optimized for Linux, macOS, Windows & HarmonyOS%s │%s\n", cyan, bold, strings.Repeat(" ", bannerWidth-50), reset)
+	fmt.Printf("%s%s└%s┘%s\n", cyan, bold, strings.Repeat("─", bannerWidth-2), reset)
+	fmt.Println()
 
-	fmt.Println("╔" + strings.Repeat("═", bannerWidth) + "╗")
-	fmt.Printf("║%s%s%s║\n",
-		strings.Repeat(" ", padding),
-		contentStr,
-		strings.Repeat(" ", bannerWidth-visualLen-padding))
-	fmt.Println("╚" + strings.Repeat("═", bannerWidth) + "╝")
-	fmt.Printf("Platform: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	// Version and platform info with green accent
+	fmt.Printf("%s%s▶ FileManager %s%s\n", green, bold, versionStr, reset)
+	fmt.Printf("%s%s▶ Platform: %s/%s%s\n", green, bold, runtime.GOOS, runtime.GOARCH, reset)
+	fmt.Printf("%s%s▶ Go Runtime: %s%s\n", green, bold, runtime.Version(), reset)
 	fmt.Println()
 }
 
@@ -100,6 +161,33 @@ func GetDownloadURL() string {
 	return fmt.Sprintf("%s/v%s/filemanager-%s-%s.%s", downloadBase, Version, Version, target, ext)
 }
 
+// displayStyledVersionCheck shows a styled version check box with Midnight Purple theme
+func displayStyledVersionCheck(versionInfo string) {
+	// Midnight Purple color scheme
+	purple := "\033[35m" // Light purple (#b794f6)
+	cyan := "\033[36m"   // Cyan (#4cc9f0)
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
+	fmt.Printf("\n%s%s┌%s┐%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 🔍 Checking for updates...%s │%s\n", purple, bold, strings.Repeat(" ", 31), reset)
+	fmt.Printf("%s%s├%s┤%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sUsing cached update information...%s │%s\n", cyan, bold, "", strings.Repeat(" ", 24), reset)
+	if versionInfo != "" {
+		// Truncate if too long
+		if len(versionInfo) > boxWidth-4 {
+			versionInfo = versionInfo[:boxWidth-7] + "..."
+		}
+		padding := boxWidth - len(versionInfo) - 2
+		if padding < 0 {
+			padding = 0
+		}
+		fmt.Printf("%s%s│ %s%s │%s\n", cyan, bold, versionInfo, strings.Repeat(" ", padding), reset)
+	}
+	fmt.Printf("%s%s└%s┘%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+}
+
 // CheckForUpdates checks for available updates and handles them automatically
 func CheckForUpdates() {
 	CheckForUpdatesWithPrompt(true)
@@ -107,8 +195,6 @@ func CheckForUpdates() {
 
 // CheckForUpdatesWithPrompt checks for updates with optional user prompts
 func CheckForUpdatesWithPrompt(showPrompts bool) {
-	fmt.Println("\n🔍 Checking for updates...")
-
 	if isDevBuild() {
 		fmt.Println("Development build - skipping update check")
 		return
@@ -117,11 +203,21 @@ func CheckForUpdatesWithPrompt(showPrompts bool) {
 	// Check cache first
 	if cached, ok := loadCache(); ok {
 		if time.Since(cached.LastCheck) < 24*time.Hour {
-			fmt.Println("Using cached update information...")
-			handleUpdateWithManager(cached.ReleaseInfo, showPrompts)
+			// Build version info message
+			currentVersion := "v" + Version
+			comparison := compareVersions(cached.ReleaseInfo.TagName, currentVersion)
+			var versionInfo string
+			if comparison < 0 {
+				versionInfo = fmt.Sprintf("ℹ️  You're running a pre-release version (%s, latest stable: %s)", currentVersion, cached.ReleaseInfo.TagName)
+			}
+			displayStyledVersionCheck(versionInfo)
+			handleUpdateWithManager(cached.ReleaseInfo, false) // Don't show prompts during startup
 			return
 		}
 	}
+
+	// Display checking message
+	displayStyledVersionCheck("")
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -202,9 +298,14 @@ func handleUpdateWithManager(release ReleaseInfo, showPrompts bool) {
 			fmt.Println(manager.GetUpdateSummary())
 		}
 	} else if comparison < 0 {
-		fmt.Printf("ℹ️  You're running a pre-release version (v%s, latest stable: %s)\n", Version, release.TagName)
+		// Only show pre-release message if prompts are enabled (not during startup check)
+		if showPrompts {
+			fmt.Printf("ℹ️  You're running a pre-release version (v%s, latest stable: %s)\n", Version, release.TagName)
+		}
 	} else {
-		fmt.Printf("✅ You're running the latest version (v%s)\n", Version)
+		if showPrompts {
+			fmt.Printf("✅ You're running the latest version (v%s)\n", Version)
+		}
 	}
 }
 

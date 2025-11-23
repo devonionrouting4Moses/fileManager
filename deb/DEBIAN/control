@@ -1,0 +1,9 @@
+Package: filemanager
+Version: 2.0.0
+Architecture: amd64
+Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
+Description: Modern file manager with Rust+Go backend
+ FileManager v2 is a dual-mode file manager with terminal and web interfaces.
+ Built with Rust for performance and Go for flexibility.
+Homepage: https://github.com/devonionrouting4Moses/fileManager
+Depends: libc6, libgcc-s1, libstdc++6

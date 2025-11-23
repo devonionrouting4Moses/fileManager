@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileManager - Web Interface</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🗂️ FileManager</h1>
+            <p class="version">Web Interface v0.1.0</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Operation Selection -->
+            <section class="operations-grid">
+                <h2>Available Operations</h2>
+                
+                <div class="operation-cards">
+                    <div class="card" onclick="showOperation('createFolder')">
+                        <div class="card-icon">📁</div>
+                        <h3>Create Folder</h3>
+                        <p>Create single or multiple folders</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('createFile')">
+                        <div class="card-icon">📄</div>
+                        <h3>Create File</h3>
+                        <p>Create files with auto-directory creation</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('rename')">
+                        <div class="card-icon">🔄</div>
+                        <h3>Rename</h3>
+                        <p>Rename files or folders</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('delete')">
+                        <div class="card-icon">🗑️</div>
+                        <h3>Delete</h3>
+                        <p>Delete files or folders</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('chmod')">
+                        <div class="card-icon">🔒</div>
+                        <h3>Permissions</h3>
+                        <p>Change file/folder permissions</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('move')">
+                        <div class="card-icon">➡️</div>
+                        <h3>Move</h3>
+                        <p>Move files or folders</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('copy')">
+                        <div class="card-icon">📋</div>
+                        <h3>Copy</h3>
+                        <p>Copy files or folders</p>
+                    </div>
+
+                    <div class="card" onclick="showOperation('structure')">
+                        <div class="card-icon">🏗️</div>
+                        <h3>Create Structure</h3>
+                        <p>Templates, custom, or tree structures</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Operation Forms -->
+            <section id="operation-forms" class="hidden">
+                <button class="back-btn" onclick="hideOperationForms()">← Back to Operations</button>
+
+                <!-- Create Folder Form -->
+                <div id="form-createFolder" class="operation-form hidden">
+                    <h2>📁 Create Folder(s)</h2>
+                    <p class="form-description">Enter folder paths separated by spaces for multiple folders</p>
+                    <textarea id="folderPaths" placeholder="e.g., project/src project/docs project/tests" rows="4"></textarea>
+                    <button class="btn-primary" onclick="executeCreateFolder()">Create Folders</button>
+                </div>
+
+                <!-- Create File Form -->
+                <div id="form-createFile" class="operation-form hidden">
+                    <h2>📄 Create File(s)</h2>
+                    <p class="form-description">Enter file paths separated by spaces. Parent directories will be created automatically.</p>
+                    <textarea id="filePaths" placeholder="e.g., project/src/main.go project/README.md" rows="4"></textarea>
+                    <button class="btn-primary" onclick="executeCreateFile()">Create Files</button>
+                </div>
+
+                <!-- Rename Form -->
+                <div id="form-rename" class="operation-form hidden">
+                    <h2>🔄 Rename File/Folder</h2>
+                    <input type="text" id="oldPath" placeholder="Current path (e.g., old_name.txt)">
+                    <input type="text" id="newPath" placeholder="New path (e.g., new_name.txt)">
+                    <button class="btn-primary" onclick="executeRename()">Rename</button>
+                </div>
+
+                <!-- Delete Form -->
+                <div id="form-delete" class="operation-form hidden">
+                    <h2>🗑️ Delete File/Folder</h2>
+                    <p class="warning">⚠️ Warning: This action cannot be undone!</p>
+                    <input type="text" id="deletePath" placeholder="Path to delete">
+                    <button class="btn-danger" onclick="executeDelete()">Delete</button>
+                </div>
+
+                <!-- Change Permissions Form -->
+                <div id="form-chmod" class="operation-form hidden">
+                    <h2>🔒 Change Permissions</h2>
+                    <input type="text" id="chmodPath" placeholder="Path">
+                    <input type="text" id="chmodMode" placeholder="Permissions (e.g., 755, 644)">
+                    <button class="btn-primary" onclick="executeChmod()">Change Permissions</button>
+                </div>
+
+                <!-- Move Form -->
+                <div id="form-move" class="operation-form hidden">
+                    <h2>➡️ Move File/Folder</h2>
+                    <input type="text" id="moveSrc" placeholder="Source path">
+                    <input type="text" id="moveDest" placeholder="Destination path">
+                    <button class="btn-primary" onclick="executeMove()">Move</button>
+                </div>
+
+                <!-- Copy Form -->
+                <div id="form-copy" class="operation-form hidden">
+                    <h2>📋 Copy File/Folder</h2>
+                    <input type="text" id="copySrc" placeholder="Source path">
+                    <input type="text" id="copyDest" placeholder="Destination path">
+                    <button class="btn-primary" onclick="executeCopy()">Copy</button>
+                </div>
+
+                <!-- Structure Forms -->
+                <div id="form-structure" class="operation-form hidden">
+                    <h2>🏗️ Create Structure</h2>
+                    
+                    <div class="structure-tabs">
+                        <button class="tab-btn active" onclick="switchStructureTab('template')">Templates</button>
+                        <button class="tab-btn" onclick="switchStructureTab('custom')">Custom</button>
+                        <button class="tab-btn" onclick="switchStructureTab('tree')">Parse Tree</button>
+                    </div>
+
+                    <!-- Template Structure -->
+                    <div id="structure-template" class="structure-content">
+                        <p class="form-description">Select a project template</p>
+                        <select id="templateSelect">
+                            <option value="">Loading templates...</option>
+                        </select>
+                        <input type="text" id="templateRoot" placeholder="Root directory name (e.g., my-project)">
+                        <button class="btn-primary" onclick="executeTemplate()">Create from Template</button>
+                    </div>
+
+                    <!-- Custom Structure -->
+                    <div id="structure-custom" class="structure-content hidden">
+                        <p class="form-description">Define custom structure (one per line)</p>
+                        <p class="form-hint">Prefix with 'd:' for directories, 'f:' for files</p>
+                        <textarea id="customStructure" placeholder="d:myproject&#10;d:myproject/src&#10;f:myproject/src/main.go&#10;f:myproject/README.md" rows="8"></textarea>
+                        <button class="btn-primary" onclick="executeCustom()">Create Structure</button>
+                    </div>
+
+                    <!-- Tree Structure -->
+                    <div id="structure-tree" class="structure-content hidden">
+                        <p class="form-description">Paste tree-format structure</p>
+                        <p class="form-hint">Example format: myproject/├── src/│   ├── main.go</p>
+                        <textarea id="treeStructure" placeholder="myproject/&#10;├── src/&#10;│   ├── main.go&#10;│   └── utils.go&#10;└── README.md" rows="10"></textarea>
+                        <button class="btn-primary" onclick="executeTree()">Parse & Create</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results" class="results-section hidden">
+                <h2>Results</h2>
+                <div id="resultsContent"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 FileManager | <a href="https://github.com/devonionrouting4Moses/fileManager" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

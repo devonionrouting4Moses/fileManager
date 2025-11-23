@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/devonionrouting4Moses/fileManager/discussions
+    about: Ask questions and discuss features
+  - name: 📚 Documentation
+    url: https://github.com/devonionrouting4Moses/fileManager/wiki
+    about: Read the documentation
+  - name: 📧 Email Support
+    url: https://github.com/devonionrouting4Moses/fileManager/discussions/new?category=general
+    about: Contact maintainer at moses.muranja@strathmore.edu

@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+ldconfig
+mkdir -p ~/.config/filemanager
+echo "FileManager installed successfully!"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"filemanager/internal/ffi"
 	"filemanager/internal/service"
+	"filemanager/pkg/version"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -379,7 +380,7 @@ func HandleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "healthy",
-		"version": "0.1.2",
+		"version": version.GetVersion(),
 	})
 }
 

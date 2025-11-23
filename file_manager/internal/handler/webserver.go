@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"filemanager/pkg/version"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 )
 
 // StartWebServer starts the HTTP server
-func StartWebServer() {
+func StartWebServer() error {
 	// Determine the static files directory
 	// Try to use the executable's directory first, then fall back to current directory
 	exePath, err := os.Executable()
@@ -75,8 +76,9 @@ func StartWebServer() {
 	openBrowser(url)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("❌ Server failed to start: %v", err)
+		return fmt.Errorf("server failed to start: %w", err)
 	}
+	return nil
 }
 
 func openBrowser(url string) {
@@ -119,7 +121,8 @@ func createBasicFrontend(staticDir string) {
 	}
 
 	// Create index.html with full-featured interface
-	indexHTML := `<!DOCTYPE html>
+	appVersion := version.GetVersion()
+	indexHTML := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -131,7 +134,7 @@ func createBasicFrontend(staticDir string) {
     <header>
         <div class="header-content">
             <h1>🗂️ FileManager</h1>
-            <p class="version">Web Interface v0.1.0</p>
+            <p class="version">Web Interface v%s</p>
         </div>
     </header>
 
@@ -304,7 +307,7 @@ func createBasicFrontend(staticDir string) {
 
     <script src="js/main.js"></script>
 </body>
-</html>`
+</html>`, appVersion)
 
 	// Create comprehensive CSS
 	styleCSS := `* {

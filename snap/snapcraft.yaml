@@ -1,6 +1,7 @@
 name: filemanager
 base: core24
 version: '2.0.0'
+title: FileManager
 summary: Modern file manager with Rust+Go backend
 description: |
   FileManager v2 is a major upgrade with improved performance and new features.
@@ -24,6 +25,7 @@ contact: moses.muranja@strathmore.edu
 website: https://github.com/devonionrouting4Moses/fileManager
 source-code: https://github.com/devonionrouting4Moses/fileManager
 issues: https://github.com/devonionrouting4Moses/fileManager/issues
+donation: https://github.com/sponsors/devonionrouting4Moses
 
 grade: stable
 confinement: strict
@@ -36,6 +38,7 @@ apps:
     command: usr/local/bin/filemanager
     environment:
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      SNAP_REAL_HOME: $HOME
     plugs:
       - home
       - removable-media
@@ -67,6 +70,9 @@ parts:
       - golang-go
       - build-essential
       - pkg-config
+      - libssl-dev
+      - curl
+      - wget
     stage-packages:
       - libc6
       - libgcc-s1
@@ -74,30 +80,63 @@ parts:
     override-build: |
       set -e
       
-      # Fix go.mod version format if needed
-      if grep -q '^go [0-9]\+\.[0-9]\+\.[0-9]\+' go.mod; then
-        echo "Fixing go.mod version format..."
-        sed -i 's/^go [0-9]\+\.[0-9]\+\.[0-9]\+$/go 1.21/' go.mod
-      fi
+      echo "Building FileManager for Snap..."
+      
+      # Setup Rust environment
+      . $HOME/.cargo/env
+      rustc --version
       
       # Build Rust library
-      . $HOME/.cargo/env
-      cargo build --release
+      echo "Building Rust library..."
+      cd rust_ffi
+      cargo build --release -p fs-operations-core
+      cd ..
+      
+      # Verify Rust library was built
+      if [ ! -f rust_ffi/target/release/libfs_operations_core.so ]; then
+        echo "ERROR: Rust library not found!"
+        ls -la rust_ffi/target/release/ || echo "Release directory not found"
+        exit 1
+      fi
+      echo "✅ Rust library built successfully"
+      
+      # Fix go.mod version if needed (snapcraft may have older Go)
+      echo "Checking Go version compatibility..."
+      GO_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
+      echo "Available Go version: $GO_VERSION"
+      
+      # Downgrade go.mod to compatible version if needed
+      if [ -f file_manager/go.mod ]; then
+        # Check if go.mod requires 1.24
+        if grep -q "^go 1.24" file_manager/go.mod; then
+          echo "Downgrading go.mod from 1.24 to 1.21 for compatibility..."
+          sed -i 's/^go 1.24$/go 1.21/' file_manager/go.mod
+        fi
+      fi
       
       # Build Go binary
+      echo "Building Go binary..."
+      cd file_manager
       export CGO_ENABLED=1
-      export CGO_LDFLAGS="-L${SNAPCRAFT_PART_BUILD}/target/release"
-      export CGO_CFLAGS="-I${SNAPCRAFT_PART_BUILD}"
-      go mod tidy
-      go build -ldflags="-s -w" -o filemanager .
+      export CGO_LDFLAGS="-L../rust_ffi/target/release -lfs_operations_core -ldl -lpthread -lm"
+      
+      # Use go mod download with timeout to avoid issues
+      timeout 300 go mod download || echo "⚠️  go mod download had issues, continuing..."
+      
+      go build -ldflags="-s -w" -o ../filemanager ./cmd/app
+      cd ..
+      
+      if [ ! -f filemanager ]; then
+        echo "ERROR: Go binary not found!"
+        exit 1
+      fi
+      echo "✅ Go binary built successfully"
       
       # Install files
       install -D -m 755 filemanager ${SNAPCRAFT_PART_INSTALL}/usr/local/bin/filemanager
       
       # Install Rust library
-      if [ -f target/release/libfilemanager.so ]; then
-        install -D -m 644 target/release/libfilemanager.so ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/libfilemanager.so
-      fi
+      install -D -m 644 rust_ffi/target/release/libfs_operations_core.so ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/libfs_operations_core.so
       
       # Install documentation
       if [ -f README.md ]; then
@@ -107,6 +146,8 @@ parts:
       if [ -f LICENSE ]; then
         install -D -m 644 LICENSE ${SNAPCRAFT_PART_INSTALL}/usr/share/doc/filemanager/LICENSE
       fi
+      
+      echo "✅ Snap build completed successfully"
 
   desktop-file:
     plugin: dump

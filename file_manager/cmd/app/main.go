@@ -15,6 +15,100 @@ import (
 	"time"
 )
 
+// Color scheme for each operation
+type OperationStyle struct {
+	Color       string
+	Icon        string
+	Title       string
+	Description string
+}
+
+var operationStyles = map[int]OperationStyle{
+	1: {Color: "\033[35m", Icon: "📁", Title: "CREATE FOLDER", Description: "Enter folder path(s) - space-separated for multiple folders"},
+	2: {Color: "\033[35m", Icon: "📄", Title: "CREATE FILE", Description: "Enter file(s) - space-separated for multiple"},
+	3: {Color: "\033[35m", Icon: "🔄", Title: "RENAME FILE/FOLDER", Description: "Enter old path and new name"},
+	4: {Color: "\033[35m", Icon: "🗑️", Title: "DELETE FILE/FOLDER", Description: "Enter path(s) to delete - space-separated"},
+	5: {Color: "\033[35m", Icon: "🔐", Title: "CHANGE PERMISSIONS", Description: "Enter path and permissions"},
+	6: {Color: "\033[35m", Icon: "➡️", Title: "MOVE FILE/FOLDER", Description: "Enter source and destination paths"},
+	7: {Color: "\033[35m", Icon: "📋", Title: "COPY FILE/FOLDER", Description: "Enter source and destination paths"},
+}
+
+// displayOperationProgress shows styled progress output for operations
+func displayOperationProgress(operation int, status string, success bool) {
+	style, exists := operationStyles[operation]
+	if !exists {
+		return
+	}
+
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	if success {
+		fmt.Printf("%s%s✅ %s%s\n", style.Color, bold, status, reset)
+	} else {
+		fmt.Printf("%s%s❌ %s%s\n", style.Color, bold, status, reset)
+	}
+}
+
+// displayInputBox shows a styled input box with Midnight Purple theme
+func displayInputBox(prompt string) {
+	// Midnight Purple color scheme
+	purple := "\033[35m" // Light purple for border
+	cyan := "\033[36m"   // Cyan for text
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 50
+
+	fmt.Printf("%s%s┌%s┐%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+
+	// Prompt line with safe padding
+	promptLen := len(prompt)
+	promptPadding := boxWidth - promptLen - 2
+	if promptPadding < 0 {
+		promptPadding = 0
+	}
+	fmt.Printf("%s%s│ %s%s%s │%s\n", purple, bold, cyan, prompt, strings.Repeat(" ", promptPadding), reset)
+	fmt.Printf("%s%s└%s┘%s ", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Print("> ")
+}
+
+// displayStyledPrompt shows a styled input prompt for operations
+func displayStyledPrompt(operation int, prompt string) {
+	style, exists := operationStyles[operation]
+	if !exists {
+		fmt.Print(prompt)
+		return
+	}
+
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 50
+
+	// Header
+	fmt.Printf("%s%s┌%s┐%s\n", style.Color, bold, strings.Repeat("─", boxWidth-2), reset)
+
+	// Title line with safe padding
+	titleLen := len(style.Icon) + len(style.Title) + 3
+	titlePadding := boxWidth - titleLen - 2
+	if titlePadding < 0 {
+		titlePadding = 0
+	}
+	fmt.Printf("%s%s│ %s %s%s │%s\n", style.Color, bold, style.Icon, style.Title, strings.Repeat(" ", titlePadding), reset)
+
+	fmt.Printf("%s%s├%s┤%s\n", style.Color, bold, strings.Repeat("─", boxWidth-2), reset)
+
+	// Description line with safe padding
+	descLen := len(style.Description)
+	descPadding := boxWidth - descLen - 2
+	if descPadding < 0 {
+		descPadding = 0
+	}
+	fmt.Printf("%s%s│ %s%s │%s\n", style.Color, bold, style.Description, strings.Repeat(" ", descPadding), reset)
+
+	fmt.Printf("%s%s└%s┘%s\n", style.Color, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Print("> ")
+}
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -32,7 +126,10 @@ func main() {
 			return
 		case "--web", "-w":
 			// Start web server mode directly
-			handler.StartWebServer()
+			if err := handler.StartWebServer(); err != nil {
+				fmt.Fprintf(os.Stderr, "❌ Server failed to start: %v\n", err)
+				os.Exit(1)
+			}
 			return
 		}
 	}
@@ -48,7 +145,8 @@ func main() {
 	for {
 		displayMenu()
 
-		fmt.Print("Enter your choice: ")
+		fmt.Println()
+		displayInputBox("Enter your choice (0-9)")
 		if !scanner.Scan() {
 			break
 		}
@@ -104,34 +202,75 @@ func showHelp() {
 }
 
 func displayMenu() {
-	fmt.Println("┌────────────────────────────────────────┐")
-	fmt.Println("│           Available Operations         │")
-	fmt.Println("├────────────────────────────────────────┤")
-	fmt.Println("│  1️⃣  Create Folder                     │")
-	fmt.Println("│  2️⃣  Create File                       │")
-	fmt.Println("│  3️⃣  Rename File/Folder                │")
-	fmt.Println("│  4️⃣  Delete File/Folder                │")
-	fmt.Println("│  5️⃣  Change Permissions                │")
-	fmt.Println("│  6️⃣  Move File/Folder                  │")
-	fmt.Println("│  7️⃣  Copy File/Folder                  │")
-	fmt.Println("│  8️⃣  Create Structure (Multi-entity)   │")
-	fmt.Println("│  9️⃣  Launch Web Interface              │")
-	fmt.Println("│  0️⃣  Exit                              │")
-	fmt.Println("└────────────────────────────────────────┘")
+	// ANSI color codes
+	green := "\033[32m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with green border
+	fmt.Printf("%s%s┌%s┐%s\n", green, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s AVAILABLE OPERATIONS %s│%s\n", green, bold, strings.Repeat(" ", 14), strings.Repeat(" ", 14), reset)
+	fmt.Printf("%s%s├%s┤%s\n", green, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Create Folder",
+		"2️⃣  Create File",
+		"3️⃣  Rename File/Folder",
+		"4️⃣  Delete File/Folder",
+		"5️⃣  Change Permissions",
+		"6️⃣  Move File/Folder",
+		"7️⃣  Copy File/Folder",
+		"8️⃣  Create Structure (Multi-entity)",
+		"9️⃣  Launch Web Interface",
+		"0️⃣  Exit",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", green, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", green, bold, strings.Repeat("─", 48), reset)
 	fmt.Println()
 }
 
 func handleWebServerLaunch() {
-	fmt.Println("\n🌐 Launching Web Interface...")
-	fmt.Println("════════════════════════════════════════")
-	fmt.Println("Starting HTTP server on http://localhost:8080")
-	fmt.Println("Press Ctrl+C to stop the server")
+	// Midnight Purple color scheme
+	primary := "\033[38;5;219m"   // Pink (#ffb7c5)
+	accent := "\033[38;5;198m"    // Hot pink (#ff69b4)
+	secondary := "\033[38;5;135m" // Violet (#9d4edd)
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
 	fmt.Println()
-	handler.StartWebServer()
+
+	// First box - Server Status
+	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 🌐 Launching Web Interface%s │%s\n", primary, bold, strings.Repeat(" ", 32), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sStarting HTTP server...%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 34), reset)
+	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
+
+	// Second box - Connection Details
+	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 📡 Connection Details%s │%s\n", primary, bold, strings.Repeat(" ", 37), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sURL: %shttp://localhost:8080%s │%s\n", accent, bold, secondary, primary, strings.Repeat(" ", 30), reset)
+	fmt.Printf("%s%s│ %sPress Ctrl+C to stop the server%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 27), reset)
+	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
+
+	if err := handler.StartWebServer(); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Server failed to start: %v\n", err)
+	}
 }
 
 func handleCreateFolder(scanner *bufio.Scanner) {
-	fmt.Print("\n📁 Enter folder path(s) - space-separated for multiple folders: ")
+	fmt.Println()
+	displayStyledPrompt(1, "")
 	if !scanner.Scan() {
 		return
 	}
@@ -151,25 +290,27 @@ func handleCreateFolder(scanner *bufio.Scanner) {
 	successCount := 0
 	errorCount := 0
 
+	fmt.Println()
 	for _, path := range paths {
 		result := ffi.CreateFolder(path)
 		if result.Success {
 			successCount++
-			fmt.Printf("  ✅ 📁 %s\n", path)
+			displayOperationProgress(1, fmt.Sprintf("Created folder: %s", path), true)
 		} else {
 			errorCount++
-			fmt.Printf("  ❌ %s: %s\n", path, result.Message)
+			displayOperationProgress(1, fmt.Sprintf("Failed to create %s: %s", path, result.Message), false)
 		}
 	}
 
 	if len(paths) > 1 {
-		fmt.Printf("📊 Summary: %d succeeded, %d failed\n", successCount, errorCount)
+		fmt.Printf("\n📊 Summary: %d succeeded, %d failed\n", successCount, errorCount)
 	}
 	fmt.Println()
 }
 
 func handleCreateFile(scanner *bufio.Scanner) {
-	fmt.Print("📄 Enter file path(s) - space-separated for multiple files: ")
+	fmt.Println()
+	displayStyledPrompt(2, "")
 	if !scanner.Scan() {
 		return
 	}
@@ -189,10 +330,11 @@ func handleCreateFile(scanner *bufio.Scanner) {
 	successCount := 0
 	errorCount := 0
 
+	fmt.Println()
 	for _, path := range paths {
 		// Validate the path
 		if err := validateFilePath(path); err != nil {
-			fmt.Printf("❌ %s: %s\n", path, err.Error())
+			displayOperationProgress(2, fmt.Sprintf("Invalid path %s: %s", path, err.Error()), false)
 			errorCount++
 			continue
 		}
@@ -202,20 +344,20 @@ func handleCreateFile(scanner *bufio.Scanner) {
 		if dir != "." && dir != path {
 			result := ffi.CreateFolder(dir)
 			if !result.Success {
-				fmt.Printf("❌ Failed to create directory %s: %s\n", dir, result.Message)
+				displayOperationProgress(2, fmt.Sprintf("Failed to create directory %s: %s", dir, result.Message), false)
 				errorCount++
 				continue
 			}
-			fmt.Printf("  📁 Created directory: %s\n", dir)
+			displayOperationProgress(2, fmt.Sprintf("Created directory: %s", dir), true)
 		}
 
 		result := ffi.CreateFile(path)
 		if result.Success {
 			successCount++
-			fmt.Printf("  ✅ 📄 %s\n", path)
+			displayOperationProgress(2, fmt.Sprintf("Created file: %s", path), true)
 		} else {
 			errorCount++
-			fmt.Printf("  ❌ %s: %s\n", path, result.Message)
+			displayOperationProgress(2, fmt.Sprintf("Failed to create %s: %s", path, result.Message), false)
 		}
 	}
 
@@ -259,13 +401,15 @@ func validateFilePath(path string) error {
 }
 
 func handleRename(scanner *bufio.Scanner) {
-	fmt.Print("🔄 Enter current path: ")
+	fmt.Println()
+	displayStyledPrompt(3, "")
 	if !scanner.Scan() {
 		return
 	}
 	oldPath := strings.TrimSpace(scanner.Text())
 
-	fmt.Print("Enter new path: ")
+	fmt.Println()
+	displayInputBox("Enter new path")
 	if !scanner.Scan() {
 		return
 	}
@@ -281,18 +425,19 @@ func handleRename(scanner *bufio.Scanner) {
 		return
 	}
 
+	fmt.Println()
 	result := ffi.RenamePath(oldPath, newPath)
 	if !result.Success {
-		fmt.Printf("❌ Rename failed: %s\n", result.Message)
-		fmt.Println("   Tip: Ensure the source path exists and you have permission to rename it")
+		displayOperationProgress(3, fmt.Sprintf("Failed to rename %s: %s", oldPath, result.Message), false)
 	} else {
-		ffi.PrintResult(result)
+		displayOperationProgress(3, fmt.Sprintf("Renamed %s to %s", oldPath, newPath), true)
 	}
 	fmt.Println()
 }
 
 func handleDelete(scanner *bufio.Scanner) {
-	fmt.Print("🗑️  Enter path to delete: ")
+	fmt.Println()
+	displayStyledPrompt(4, "")
 	if !scanner.Scan() {
 		return
 	}
@@ -314,13 +459,19 @@ func handleDelete(scanner *bufio.Scanner) {
 		return
 	}
 
+	fmt.Println()
 	result := ffi.DeletePath(path)
-	ffi.PrintResult(result)
+	if result.Success {
+		displayOperationProgress(4, fmt.Sprintf("Deleted: %s", path), true)
+	} else {
+		displayOperationProgress(4, fmt.Sprintf("Failed to delete %s: %s", path, result.Message), false)
+	}
 	fmt.Println()
 }
 
 func handleChangePermissions(scanner *bufio.Scanner) {
-	fmt.Print("🔒 Enter path: ")
+	fmt.Println()
+	displayStyledPrompt(5, "")
 	if !scanner.Scan() {
 		return
 	}
@@ -344,15 +495,14 @@ func handleChangePermissions(scanner *bufio.Scanner) {
 		return
 	}
 
+	fmt.Println()
 	result := ffi.ChangePermissions(path, uint32(mode))
 	if !result.Success {
-		fmt.Printf("❌ Failed to change permissions: %s\n", result.Message)
-		fmt.Println("   Tip: Ensure the path exists and you have permission to modify it")
+		displayOperationProgress(5, fmt.Sprintf("Failed to change permissions: %s", result.Message), false)
 		return
 	}
 
-	// Display permission explanation
-	fmt.Printf("\n✅ Permissions changed to: %s\n", modeStr)
+	displayOperationProgress(5, fmt.Sprintf("Changed permissions to %s for %s", modeStr, path), true)
 	fmt.Println()
 	displayPermissionInfo(modeStr)
 	fmt.Println()
@@ -460,13 +610,15 @@ func decodePermission(digit string) string {
 }
 
 func handleMove(scanner *bufio.Scanner) {
-	fmt.Print("➡️  Enter source path: ")
+	fmt.Println()
+	displayStyledPrompt(6, "")
 	if !scanner.Scan() {
 		return
 	}
 	src := strings.TrimSpace(scanner.Text())
 
-	fmt.Print("Enter destination path: ")
+	fmt.Println()
+	displayInputBox("Enter destination path")
 	if !scanner.Scan() {
 		return
 	}
@@ -482,24 +634,26 @@ func handleMove(scanner *bufio.Scanner) {
 		return
 	}
 
+	fmt.Println()
 	result := ffi.MovePath(src, dst)
 	if !result.Success {
-		fmt.Printf("❌ Move failed: %s\n", result.Message)
-		fmt.Println("   Tip: Ensure source exists, destination parent directory exists, and you have permissions")
+		displayOperationProgress(6, fmt.Sprintf("Failed to move %s: %s", src, result.Message), false)
 	} else {
-		ffi.PrintResult(result)
+		displayOperationProgress(6, fmt.Sprintf("Moved %s to %s", src, dst), true)
 	}
 	fmt.Println()
 }
 
 func handleCopy(scanner *bufio.Scanner) {
-	fmt.Print("📋 Enter source path: ")
+	fmt.Println()
+	displayStyledPrompt(7, "")
 	if !scanner.Scan() {
 		return
 	}
 	src := strings.TrimSpace(scanner.Text())
 
-	fmt.Print("Enter destination path: ")
+	fmt.Println()
+	displayInputBox("Enter destination path")
 	if !scanner.Scan() {
 		return
 	}
@@ -510,30 +664,75 @@ func handleCopy(scanner *bufio.Scanner) {
 		return
 	}
 
+	fmt.Println()
 	result := ffi.CopyPath(src, dst)
-	ffi.PrintResult(result)
+	if result.Success {
+		displayOperationProgress(7, fmt.Sprintf("Copied %s to %s", src, dst), true)
+	} else {
+		displayOperationProgress(7, fmt.Sprintf("Failed to copy %s: %s", src, result.Message), false)
+	}
 	fmt.Println()
 }
 
 func handleCreateStructure(scanner *bufio.Scanner) {
 	for {
-		fmt.Println("\n🏗️  Create Hierarchical Structure")
-		fmt.Println("════════════════════════════════════════")
+		// ANSI color codes
+		cyan := "\033[36m"
+		green := "\033[32m"
+		yellow := "\033[33m"
+		magenta := "\033[35m"
+		reset := "\033[0m"
+		bold := "\033[1m"
+
+		// Header with cyan border
+		fmt.Printf("%s%s┌%s┐%s\n", cyan, bold, strings.Repeat("─", 48), reset)
+		fmt.Printf("%s%s│ 🏗️  CREATE HIERARCHICAL STRUCTURE%s │%s\n", cyan, bold, strings.Repeat(" ", 13), reset)
+		fmt.Printf("%s%s└%s┘%s\n", cyan, bold, strings.Repeat("─", 48), reset)
 		fmt.Println()
 
 		templates := service.GetAvailableTemplates()
 
-		fmt.Println("📦 Available Templates:")
+		// Templates section with green border
+		fmt.Printf("%s%s┌%s┐%s\n", green, bold, strings.Repeat("─", 48), reset)
+		fmt.Printf("%s%s│ 📦 AVAILABLE TEMPLATES%s │%s\n", green, bold, strings.Repeat(" ", 24), reset)
+		fmt.Printf("%s%s├%s┤%s\n", green, bold, strings.Repeat("─", 48), reset)
+
+		// Display templates in two columns for better layout
 		for i, t := range templates {
-			fmt.Printf("  %2d. %s\n", i+1, t.Description)
+			padding := 48 - len(fmt.Sprintf("%2d. %s", i+1, t.Description)) - 2
+			fmt.Printf("%s%s│ %2d. %s%s │%s\n", green, bold, i+1, t.Description, strings.Repeat(" ", padding), reset)
 		}
 
-		fmt.Printf("\n  %2d. Custom Structure (from definition)\n", len(templates)+1)
-		fmt.Printf("  %2d. Parse Tree Structure (paste)\n", len(templates)+2)
-		fmt.Printf("  %2d. Interactive Builder\n", len(templates)+3)
-		fmt.Printf("  %2d. ← Back to Main Menu\n", len(templates)+4)
+		fmt.Printf("%s%s├%s┤%s\n", green, bold, strings.Repeat("─", 48), reset)
+
+		// Special options section with yellow accent
+		specialOptions := []string{
+			fmt.Sprintf("%2d. Custom Structure (from definition)", len(templates)+1),
+			fmt.Sprintf("%2d. Parse Tree Structure (paste)", len(templates)+2),
+			fmt.Sprintf("%2d. Interactive Builder", len(templates)+3),
+		}
+
+		for _, opt := range specialOptions {
+			padding := 48 - len(opt) - 2
+			fmt.Printf("%s%s│ %s%s │%s\n", yellow, bold, opt, strings.Repeat(" ", padding), reset)
+		}
+
+		fmt.Printf("%s%s└%s┘%s\n", green, bold, strings.Repeat("─", 48), reset)
 		fmt.Println()
-		fmt.Print("Select option: ")
+
+		// Back option with magenta border at bottom
+		fmt.Printf("%s%s┌%s┐%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+		backOpt := fmt.Sprintf("%2d. ← Back to Main Menu", len(templates)+4)
+		padding := 48 - len(backOpt) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", magenta, bold, backOpt, strings.Repeat(" ", padding), reset)
+		fmt.Printf("%s%s└%s┘%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+		fmt.Println()
+
+		// Input prompt
+		fmt.Printf("%s%s┌%s┐%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+		fmt.Printf("%s%s│ Select option (1-%d):%s │%s\n", magenta, bold, len(templates)+4, strings.Repeat(" ", 20), reset)
+		fmt.Printf("%s%s└%s┘%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+		fmt.Print("> ")
 
 		if !scanner.Scan() {
 			return
@@ -696,21 +895,34 @@ func handleCustomStructure(scanner *bufio.Scanner) bool {
 
 // handleParseTreeStructure creates a structure from pasted tree format
 func handleParseTreeStructure(scanner *bufio.Scanner) bool {
-	fmt.Println("\n🌳 Parse Tree Structure")
-	fmt.Println("════════════════════════════════════════")
-	fmt.Println("Paste your tree structure (supports ├──, └──, │ characters)")
-	fmt.Println("Example:")
-	fmt.Println("  myapp/")
-	fmt.Println("  ├── src/")
-	fmt.Println("  │   ├── main.go")
-	fmt.Println("  │   └── utils.go")
-	fmt.Println("  ├── tests/")
-	fmt.Println("  └── README.md")
-	fmt.Println("Enter 'done' when finished (or 'back' to cancel)")
+	// Midnight Purple color scheme
+	purple := "\033[35m" // Light purple for border
+	cyan := "\033[36m"   // Cyan for text
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
+	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 🌳 Parse Tree Structure%s │%s\n", purple, bold, strings.Repeat(" ", 35), reset)
+	fmt.Printf("%s%s├%s┤%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sPaste your tree structure (supports ├──, └──, │)%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 7), reset)
+	fmt.Printf("%s%s│ %sExample:%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 50), reset)
+	fmt.Printf("%s%s│ %s  myapp/%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 50), reset)
+	fmt.Printf("%s%s│ %s  ├── src/%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 48), reset)
+	fmt.Printf("%s%s│ %s  │   ├── main.go%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 41), reset)
+	fmt.Printf("%s%s│ %s  │   └── utils.go%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 40), reset)
+	fmt.Printf("%s%s│ %s  ├── tests/%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 48), reset)
+	fmt.Printf("%s%s│ %s  └── README.md%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 42), reset)
+	fmt.Printf("%s%s│ %sEnter 'done' when finished (or 'back' to cancel)%s │%s\n", purple, bold, cyan, strings.Repeat(" ", 8), reset)
+	fmt.Printf("%s%s└%s┘%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Println()
 
 	var lines []string
 	for {
+		fmt.Printf("%s%s┌%s┐%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
+		fmt.Printf("%s%s│ Input line:%s │%s\n", purple, bold, strings.Repeat(" ", boxWidth-14), reset)
+		fmt.Printf("%s%s└%s┘%s ", purple, bold, strings.Repeat("─", boxWidth-2), reset)
 		fmt.Print("> ")
 		if !scanner.Scan() {
 			return false

@@ -1,0 +1,34 @@
+pkgname=filemanager
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="Modern file manager with Rust+Go backend"
+arch=('aarch64')
+url="https://github.com/devonionrouting4Moses/fileManager"
+license=('MIT' 'Apache-2.0')
+depends=('glibc' 'gcc-libs')
+makedepends=('go' 'rust')
+
+build() {
+    cd "$srcdir"
+    
+    # Build Rust library
+    cd rust_ffi
+    cargo build --release --target aarch64-unknown-linux-gnu -p fs-operations-core
+    cd ..
+    
+    # Build Go binary
+    cd file_manager
+    GOOS=linux GOARCH=arm64 CGO_ENABLED=1 \
+      CC=aarch64-linux-gnu-gcc \
+      CXX=aarch64-linux-gnu-g++ \
+      CGO_LDFLAGS="-L../rust_ffi/target/aarch64-unknown-linux-gnu/release -lfs_operations_core -ldl -lpthread -lm" \
+      go build -ldflags="-s -w" -o ../filemanager ./cmd/app
+    cd ..
+}
+
+package() {
+    install -Dm755 filemanager "$pkgdir/usr/bin/filemanager"
+    install -Dm755 rust_ffi/target/aarch64-unknown-linux-gnu/release/libfs_operations_core.so "$pkgdir/usr/lib/libfs_operations_core.so"
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md" 2>/dev/null || true
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 2>/dev/null || true
+}
