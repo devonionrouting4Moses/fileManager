@@ -237,7 +237,7 @@ class Config:
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True)`,
+    app.run(host='0.0.0.0', port=5000, debug=True)`,
 			".env.example": "SECRET_KEY=your-secret-key\nDATABASE_URL=sqlite:///app.db\n",
 			".gitignore":   "*.pyc\n__pycache__/\nvenv/\n.env\n",
 		},
