@@ -68,10 +68,6 @@ func StartWebServer() error {
 	port := "8080"
 	url := fmt.Sprintf("http://localhost:%s", port)
 
-	fmt.Printf("✅ Server started successfully!\n")
-	fmt.Printf("🌐 Open your browser and navigate to: %s\n", url)
-	fmt.Printf("📝 Press Ctrl+C to stop the server\n\n")
-
 	// Try to open browser automatically
 	openBrowser(url)
 

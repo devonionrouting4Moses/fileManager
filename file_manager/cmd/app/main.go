@@ -246,20 +246,19 @@ func handleWebServerLaunch() {
 
 	fmt.Println()
 
-	// First box - Server Status
+	// Unified box - Launching Web Interface
 	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Printf("%s%s│ 🌐 Launching Web Interface%s │%s\n", primary, bold, strings.Repeat(" ", 32), reset)
 	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Printf("%s%s│ %sStarting HTTP server...%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 34), reset)
-	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
-	fmt.Println()
-
-	// Second box - Connection Details
-	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Printf("%s%s│ 📡 Connection Details%s │%s\n", primary, bold, strings.Repeat(" ", 37), reset)
 	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
-	fmt.Printf("%s%s│ %sURL: %shttp://localhost:8080%s │%s\n", accent, bold, secondary, primary, strings.Repeat(" ", 30), reset)
+	fmt.Printf("%s%s│ %sURL: http://localhost:8080%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 28), reset)
 	fmt.Printf("%s%s│ %sPress Ctrl+C to stop the server%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 27), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %s✅ Server started successfully!%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 25), reset)
+	fmt.Printf("%s%s│ %s🌐 Open your browser to begin%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 26), reset)
 	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Println()
 

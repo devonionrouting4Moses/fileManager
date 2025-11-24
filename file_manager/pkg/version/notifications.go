@@ -55,12 +55,23 @@ func (n *UpdateNotification) DisplayNotification() {
 
 // displaySilentNotification displays a minimal notification for patch updates
 func (n *UpdateNotification) displaySilentNotification() {
-	fmt.Println("\n" + strings.Repeat("─", 60))
-	fmt.Printf("🔧 PATCH UPDATE AVAILABLE: v%s → v%s\n", n.CurrentVersion, n.AvailableVersion)
-	fmt.Println("─ Security & Bug Fixes ─")
-	fmt.Println("\n✅ This is a safe, backwards-compatible update.")
-	fmt.Println("💡 It will be installed automatically on next restart.")
-	fmt.Println(strings.Repeat("─", 60) + "\n")
+	// Midnight Purple color scheme
+	primary := "\033[38;5;219m"   // Pink (#ffb7c5)
+	accent := "\033[38;5;198m"    // Hot pink (#ff69b4)
+	secondary := "\033[38;5;135m" // Violet (#9d4edd)
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
+	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 🔧 PATCH UPDATE AVAILABLE%s │%s\n", primary, bold, strings.Repeat(" ", 32), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sv%s → v%s%s │%s\n", accent, bold, secondary, n.CurrentVersion, n.AvailableVersion, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("v%s → v%s", n.CurrentVersion, n.AvailableVersion))-4), reset)
+	fmt.Printf("%s%s│ %s✅ Safe, backwards-compatible update%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 19), reset)
+	fmt.Printf("%s%s│ %s💡 Auto-installs on next restart%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 23), reset)
+	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
 
 	if n.ReleaseNotes != "" {
 		fmt.Println("📝 What's Fixed:")
@@ -71,17 +82,24 @@ func (n *UpdateNotification) displaySilentNotification() {
 
 // displaySubtleNotification displays an in-app banner for minor updates
 func (n *UpdateNotification) displaySubtleNotification() {
-	fmt.Println("\n" + strings.Repeat("═", 60))
-	fmt.Printf("║ ✨ NEW FEATURES AVAILABLE: v%s → v%s\n", n.CurrentVersion, n.AvailableVersion)
-	fmt.Println("║ " + strings.Repeat("─", 56))
-	fmt.Println("║ 📊 Update Type: MINOR (New Features & Improvements)")
-	fmt.Println("║ 📈 User Impact: Low to Moderate")
-	fmt.Println("║ 🔄 Update Strategy: Subtle In-App Notification")
-	fmt.Println("║ " + strings.Repeat("─", 56))
-	fmt.Println("║")
-	fmt.Println("║ 💡 Tip: Check the release notes to see what's new!")
-	fmt.Println("║ 🔗 You can update at your convenience.")
-	fmt.Println(strings.Repeat("═", 60) + "\n")
+	// Midnight Purple color scheme
+	primary := "\033[38;5;219m"   // Pink (#ffb7c5)
+	accent := "\033[38;5;198m"    // Hot pink (#ff69b4)
+	secondary := "\033[38;5;135m" // Violet (#9d4edd)
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
+	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ ✨ NEW FEATURES AVAILABLE%s │%s\n", primary, bold, strings.Repeat(" ", 32), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sv%s → v%s%s │%s\n", accent, bold, secondary, n.CurrentVersion, n.AvailableVersion, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("v%s → v%s", n.CurrentVersion, n.AvailableVersion))-4), reset)
+	fmt.Printf("%s%s│ %s📊 Update Type: MINOR (New Features)%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 19), reset)
+	fmt.Printf("%s%s│ %s📈 User Impact: Low to Moderate%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 24), reset)
+	fmt.Printf("%s%s│ %s💡 Update at your convenience%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 27), reset)
+	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
 
 	if n.ReleaseNotes != "" {
 		fmt.Println("📝 What's New:")
@@ -94,48 +112,44 @@ func (n *UpdateNotification) displaySubtleNotification() {
 
 // displayModalNotification displays a full-screen splash for major updates
 func (n *UpdateNotification) displayModalNotification() {
-	// Clear screen effect
-	fmt.Println("\n" + strings.Repeat("═", 70))
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║" + centerText("🚀 MAJOR UPGRADE AVAILABLE", 68) + "║")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║" + strings.Repeat("─", 68) + "║")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Printf("║  Current Version: v%s\n", n.CurrentVersion)
-	fmt.Printf("║  Available Version: v%s\n", n.AvailableVersion)
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║" + strings.Repeat("─", 68) + "║")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║  ⚠️  IMPORTANT: This is a major upgrade with breaking changes.")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║  📋 Key Changes:")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
+	// Midnight Purple color scheme
+	primary := "\033[38;5;219m"   // Pink (#ffb7c5)
+	accent := "\033[38;5;198m"    // Hot pink (#ff69b4)
+	secondary := "\033[38;5;135m" // Violet (#9d4edd)
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 70
+
+	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 🚀 MAJOR UPGRADE AVAILABLE%s │%s\n", primary, bold, strings.Repeat(" ", 40), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %sCurrent Version: v%s%s │%s\n", accent, bold, secondary, n.CurrentVersion, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Current Version: v%s", n.CurrentVersion))-4), reset)
+	fmt.Printf("%s%s│ %sAvailable Version: v%s%s │%s\n", accent, bold, secondary, n.AvailableVersion, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Available Version: v%s", n.AvailableVersion))-4), reset)
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %s⚠️  IMPORTANT: Major upgrade with breaking changes%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 15), reset)
+	fmt.Printf("%s%s│ %s✅ Action Required: Review release notes first%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 18), reset)
+	fmt.Printf("%s%s│ %s🔗 May need to reconfigure or migrate data%s │%s\n", accent, bold, secondary, strings.Repeat(" ", 22), reset)
 
 	if n.ReleaseNotes != "" {
+		fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
 		lines := strings.Split(strings.TrimSpace(n.ReleaseNotes), "\n")
 		for i, line := range lines {
 			if i >= 5 { // Limit to 5 lines in modal
-				fmt.Println("║    ... and more")
+				fmt.Printf("%s%s│ %s... and more%s │%s\n", accent, bold, secondary, strings.Repeat(" ", boxWidth-18), reset)
 				break
 			}
-			if len(line) > 60 {
-				line = line[:57] + "..."
+			if len(line) > boxWidth-8 {
+				line = line[:boxWidth-11] + "..."
 			}
-			fmt.Printf("║    • %s\n", line)
+			fmt.Printf("%s%s│ %s• %s%s │%s\n", accent, bold, secondary, line, strings.Repeat(" ", boxWidth-len(line)-6), reset)
 		}
 	}
 
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║" + strings.Repeat("─", 68) + "║")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║  ✅ Action Required: Please review release notes before updating.")
-	fmt.Println("║  🔗 You may need to reconfigure settings or migrate data.")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println("║" + strings.Repeat("─", 68) + "║")
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Printf("║  📦 Download: %s\n", truncateURL(n.DownloadURL, 60))
-	fmt.Println("║" + strings.Repeat(" ", 68) + "║")
-	fmt.Println(strings.Repeat("═", 70) + "\n")
+	fmt.Printf("%s%s├%s┤%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ %s📦 Download: %s%s │%s\n", accent, bold, secondary, truncateURL(n.DownloadURL, 40), strings.Repeat(" ", boxWidth-len(truncateURL(n.DownloadURL, 40))-14), reset)
+	fmt.Printf("%s%s└%s┘%s\n", primary, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
 
 	fmt.Println("📚 Full Release Notes:")
 	if n.ReleaseNotes != "" {
