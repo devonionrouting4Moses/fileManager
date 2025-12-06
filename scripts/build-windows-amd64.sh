@@ -62,10 +62,23 @@ echo "✅ Binary built: ./filemanager.exe"
 # Create ZIP archive
 echo "📦 Creating ZIP archive..."
 mkdir -p dist/filemanager-${VERSION}-windows-${ARCH}
+mkdir -p dist/filemanager-${VERSION}-windows-${ARCH}/frontend
 cp filemanager.exe dist/filemanager-${VERSION}-windows-${ARCH}/
 cp rust_ffi/target/x86_64-pc-windows-gnu/release/fs_operations_core.dll dist/filemanager-${VERSION}-windows-${ARCH}/ 2>/dev/null || true
 cp README.md dist/filemanager-${VERSION}-windows-${ARCH}/ 2>/dev/null || true
 cp LICENSE dist/filemanager-${VERSION}-windows-${ARCH}/ 2>/dev/null || true
+
+# Bundle frontend files for Windows
+if [ -d "filemanager_frontend" ]; then
+    echo "📂 Bundling frontend files..."
+    cp -r filemanager_frontend/* dist/filemanager-${VERSION}-windows-${ARCH}/frontend/
+else
+    echo "⚠️  Frontend directory not found, skipping frontend bundling"
+fi
+
+# Copy Windows installer files
+cp windows/installer.nsi dist/filemanager-${VERSION}-windows-${ARCH}/ 2>/dev/null || true
+cp scripts/Set-FileManagerPermissions.ps1 dist/filemanager-${VERSION}-windows-${ARCH}/ 2>/dev/null || true
 
 # Create Windows installer script
 cat > dist/filemanager-${VERSION}-windows-${ARCH}/install.bat << 'EOFBAT'

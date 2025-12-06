@@ -1,0 +1,84 @@
+app-id: com.filemanager.FileManager
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+version: '2.0.2'
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+
+command: filemanager
+
+finish-args:
+  - --share=network
+  - --socket=wayland
+  - --socket=x11
+  - --filesystem=home
+  - --filesystem=/media
+  - --filesystem=/mnt
+
+modules:
+  - name: filemanager
+    buildsystem: simple
+    build-options:
+      env:
+        GOPATH: /run/build/filemanager/go
+        PATH: /run/build/filemanager/go/bin:/usr/lib/sdk/golang/bin:/usr/bin:/bin
+    build-commands:
+      # Build the Go binary
+      - mkdir -p /run/build/filemanager/go/src/filemanager
+      - cp -r . /run/build/filemanager/go/src/filemanager/
+      - cd /run/build/filemanager/go/src/filemanager/file_manager && go build -o filemanager ./cmd/app
+      
+      # Install binary
+      - install -D /run/build/filemanager/go/src/filemanager/file_manager/filemanager /app/bin/filemanager
+      
+      # Install frontend (bundled in Flatpak)
+      - mkdir -p /app/share/filemanager/frontend
+      - cp -r /run/build/filemanager/go/src/filemanager/filemanager_frontend/* /app/share/filemanager/frontend/ 2>/dev/null || true
+      
+      # Set environment variable for frontend location
+      - mkdir -p /app/etc/filemanager
+      - echo 'frontend_dir: /app/share/filemanager/frontend' > /app/etc/filemanager/config.yaml
+      
+      # Create desktop entry
+      - mkdir -p /app/share/applications
+      - |
+        cat > /app/share/applications/com.filemanager.FileManager.desktop <<EOF
+        [Desktop Entry]
+        Type=Application
+        Name=FileManager
+        Comment=File manager with web interface
+        Exec=filemanager --web
+        Icon=system-file-manager
+        Categories=Utility;
+        EOF
+      
+      # Create appdata
+      - mkdir -p /app/share/metainfo
+      - |
+        cat > /app/share/metainfo/com.filemanager.FileManager.appdata.xml <<EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <component type="desktop-application">
+          <id>com.filemanager.FileManager</id>
+          <name>FileManager</name>
+          <summary>File manager with web interface</summary>
+          <description>
+            <p>FileManager is a cross-platform file management tool with both CLI and web interface.</p>
+            <p>Features:</p>
+            <ul>
+              <li>File and folder operations (create, rename, delete, move, copy)</li>
+              <li>Batch operations for multiple files</li>
+              <li>Project template creation</li>
+              <li>Web-based interface for remote access</li>
+              <li>Cross-platform support</li>
+            </ul>
+          </description>
+          <url type="homepage">https://github.com/devonionrouting4Moses/fileManager</url>
+          <metadata_license>CC0-1.0</metadata_license>
+          <project_license>MIT</project_license>
+        </component>
+        EOF
+    
+    sources:
+      - type: dir
+        path: .

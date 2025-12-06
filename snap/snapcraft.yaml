@@ -1,6 +1,6 @@
 name: filemanager
 base: core24
-version: '2.0.1'
+version: '2.0.2'
 title: FileManager
 summary: Modern file manager with Rust+Go backend
 description: |
@@ -39,6 +39,7 @@ apps:
     environment:
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       SNAP_REAL_HOME: $HOME
+      FILEMANAGER_FRONTEND_DIR: $SNAP/usr/share/filemanager/frontend
     plugs:
       - home
       - removable-media
@@ -137,6 +138,30 @@ parts:
       
       # Install Rust library
       install -D -m 644 rust_ffi/target/release/libfs_operations_core.so ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/libfs_operations_core.so
+
+      # ⭐ CREATE FRONTEND STRUCTURE IN SNAP
+      echo "Creating frontend structure for snap..."
+      FRONTEND_DIR="${SNAPCRAFT_PART_INSTALL}/usr/share/filemanager/frontend"
+      mkdir -p "${FRONTEND_DIR}"/{css,js,images}
+
+      # Copy existing frontend if it exists
+      if [ -d scripts/dist/filemanager_frontend ]; then
+        echo "Copying existing frontend..."
+        cp -r scripts/dist/filemanager_frontend/* "${FRONTEND_DIR}/"
+      else
+        echo "❌ ERROR: No frontend source found!"
+        echo "   Expected: frontend/ or scripts/dist/filemanager_frontend/"
+        exit 1
+      fi
+
+      # Verify frontend was created
+      if [ ! -f "${FRONTEND_DIR}/index.html" ]; then
+        echo "❌ ERROR: index.html not found after copy!"
+        exit 1
+      fi
+
+      echo "✅ Frontend bundled successfully and Frontend installed to: ${FRONTEND_DIR}"
+      ls -la "${FRONTEND_DIR}"
       
       # Install documentation
       if [ -f README.md ]; then

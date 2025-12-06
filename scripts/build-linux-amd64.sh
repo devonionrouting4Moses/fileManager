@@ -39,10 +39,19 @@ mkdir -p deb/DEBIAN
 mkdir -p deb/usr/local/bin
 mkdir -p deb/usr/local/lib
 mkdir -p deb/usr/share/doc/filemanager
+mkdir -p deb/usr/share/filemanager-staging/frontend
 
 cp filemanager deb/usr/local/bin/
 cp rust_ffi/target/release/libfs_operations_core.so deb/usr/local/lib/
 chmod +x deb/usr/local/bin/filemanager
+
+# Bundle frontend files for DEB
+if [ -d "filemanager_frontend" ]; then
+    echo "📂 Bundling frontend files..."
+    cp -r filemanager_frontend/* deb/usr/share/filemanager-staging/frontend/
+else
+    echo "⚠️  Frontend directory not found, skipping frontend bundling"
+fi
 
 # Copy debian/ files (single source of truth)
 cp debian/control deb/DEBIAN/control

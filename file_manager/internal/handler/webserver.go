@@ -225,6 +225,56 @@ func (lb *LogBox) printLocked() {
 	}
 }
 
+// isSystemLevelInstall checks if the frontend is in a system-level location (read-only)
+func isSystemLevelInstall(frontendDir string) bool {
+	// Snap - always system-level (read-only squashfs)
+	if os.Getenv("SNAP") != "" && strings.Contains(frontendDir, "/snap/") {
+		return true
+	}
+
+	// Flatpak - always system-level (read-only)
+	if os.Getenv("FLATPAK_ID") != "" && strings.HasPrefix(frontendDir, "/app/") {
+		return true
+	}
+
+	// Linux system paths (APT, RPM, etc.)
+	systemPaths := []string{
+		"/usr/share/",
+		"/usr/local/share/",
+		"/opt/",
+	}
+	for _, sysPath := range systemPaths {
+		if strings.HasPrefix(frontendDir, sysPath) {
+			return true
+		}
+	}
+
+	// macOS system paths (Homebrew, system install)
+	if runtime.GOOS == "darwin" {
+		systemPaths := []string{
+			"/usr/local/opt/",
+			"/opt/homebrew/",
+			"/Library/Application Support/",
+		}
+		for _, sysPath := range systemPaths {
+			if strings.HasPrefix(frontendDir, sysPath) {
+				return true
+			}
+		}
+	}
+
+	// Windows Program Files (system install)
+	if runtime.GOOS == "windows" {
+		programFiles := os.Getenv("ProgramFiles")
+		if programFiles != "" && strings.HasPrefix(frontendDir, programFiles) {
+			return true
+		}
+	}
+
+	// Not a system install - user-writable location
+	return false
+}
+
 // StartWebServer starts the HTTP server
 func StartWebServer() error {
 	// Create log box for startup messages with dynamic color rotation
@@ -240,10 +290,30 @@ func StartWebServer() error {
 
 	box.AddLog("📍 Using frontend from user config: " + frontendDir)
 
-	// Ensure frontend exists (creates if missing)
-	if err := ensureFrontendExists(frontendDir); err != nil {
-		box.StopColorRotation()
-		return fmt.Errorf("failed to setup frontend: %w", err)
+	// Determine if we're in a system-level install (read-only)
+	isSystemInstall := isSystemLevelInstall(frontendDir)
+
+	if isSystemInstall {
+		// System installs: frontend MUST be pre-bundled
+		if !isValidDir(frontendDir) {
+			box.StopColorRotation()
+			return fmt.Errorf("system installation error: frontend not found at %s\nThis is a packaging error - frontend should be bundled during installation.", frontendDir)
+		}
+
+		// Verify critical files exist
+		indexPath := filepath.Join(frontendDir, "index.html")
+		if _, err := os.Stat(indexPath); err != nil {
+			box.StopColorRotation()
+			return fmt.Errorf("system installation error: frontend files incomplete at %s", frontendDir)
+		}
+
+		log.Printf("📂 Using system-bundled frontend (read-only): %s\n", frontendDir)
+	} else {
+		// User installs: create if missing (writable directory)
+		if err := ensureFrontendExists(frontendDir); err != nil {
+			box.StopColorRotation()
+			return fmt.Errorf("failed to setup frontend: %w", err)
+		}
 	}
 
 	box.AddLog("✅ Frontend directory verified: " + frontendDir)
