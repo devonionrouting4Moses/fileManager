@@ -18,6 +18,27 @@ type Config struct {
 // GetFrontendDir returns the single, stable frontend directory location
 // Priority: ENV → User Config → System Config → OS Default → Portable Fallback
 func GetFrontendDir() (string, error) {
+	// 🚨 SNAP SPECIAL HANDLING - Must come FIRST
+	if snapDir := os.Getenv("SNAP"); snapDir != "" {
+		// Check if bundled frontend exists (read-only but OK for serving)
+		bundledPath := filepath.Join(snapDir, "usr/share/filemanager/frontend")
+		if isValidDir(bundledPath) {
+			// log.Printf("📍 Using bundled snap frontend: %s\n", bundledPath)
+			return bundledPath, nil
+		}
+
+		// If bundled doesn't exist, use writable snap common directory
+		// log.Printf("⚠️  Bundled frontend not found, using writable directory\n")
+		snapUserCommon := os.Getenv("SNAP_USER_COMMON")
+		if snapUserCommon == "" {
+			home, _ := os.UserHomeDir()
+			snapUserCommon = filepath.Join(home, "snap/filemanager/common")
+		}
+		frontendDir := filepath.Join(snapUserCommon, "frontend")
+		// log.Printf("📍 Using snap user common: %s\n", frontendDir)
+		return frontendDir, nil
+	}
+
 	// 1️⃣ Environment Variable Override (Highest Priority)
 	if envDir := os.Getenv("FILEMANAGER_FRONTEND_DIR"); envDir != "" {
 		absPath, err := filepath.Abs(envDir)
@@ -209,18 +230,33 @@ func getOSDefaultFrontendDir() string {
 
 // getLinuxDefaultFrontendDir returns Linux-specific frontend directory
 func getLinuxDefaultFrontendDir() string {
-	// Check for Snap
+	// Check for Snap (bundled in read-only location)
 	if snapDir := os.Getenv("SNAP"); snapDir != "" {
-		return filepath.Join(snapDir, "frontend")
+		bundledPath := filepath.Join(snapDir, "usr/share/filemanager/frontend")
+		if isValidDir(bundledPath) {
+			return bundledPath
+		}
+		// Fallback to writable snap directory
+		snapUserCommon := os.Getenv("SNAP_USER_COMMON")
+		if snapUserCommon == "" {
+			home, _ := os.UserHomeDir()
+			snapUserCommon = filepath.Join(home, "snap/filemanager/common")
+		}
+		return filepath.Join(snapUserCommon, "frontend")
 	}
 
-	// Check for Flatpak
+	// Check for Flatpak (bundled in read-only location)
 	if flatpakID := os.Getenv("FLATPAK_ID"); flatpakID != "" {
+		bundledPath := filepath.Join("/app/share/filemanager/frontend")
+		if isValidDir(bundledPath) {
+			return bundledPath
+		}
+		// Fallback to writable flatpak directory
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, ".var/app", flatpakID, "data/frontend")
 	}
 
-	// Check system installation
+	// Check system installation (APT/DEB/RPM)
 	systemDir := "/usr/share/filemanager/frontend"
 	if isValidDir(systemDir) {
 		return systemDir

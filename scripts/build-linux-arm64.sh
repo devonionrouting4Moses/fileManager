@@ -80,10 +80,19 @@ mkdir -p deb-arm64/DEBIAN
 mkdir -p deb-arm64/usr/local/bin
 mkdir -p deb-arm64/usr/local/lib
 mkdir -p deb-arm64/usr/share/doc/filemanager
+mkdir -p deb-arm64/usr/share/filemanager-staging/frontend
 
 cp filemanager-arm64 deb-arm64/usr/local/bin/filemanager
 cp rust_ffi/target/aarch64-unknown-linux-gnu/release/libfs_operations_core.so deb-arm64/usr/local/lib/
 chmod +x deb-arm64/usr/local/bin/filemanager
+
+# Bundle frontend files for DEB
+if [ -d "filemanager_frontend" ]; then
+    echo "📂 Bundling frontend files..."
+    cp -r filemanager_frontend/* deb-arm64/usr/share/filemanager-staging/frontend/
+else
+    echo "⚠️  Frontend directory not found, skipping frontend bundling"
+fi
 
 # Copy debian/ files (single source of truth)
 cp debian/control deb-arm64/DEBIAN/control

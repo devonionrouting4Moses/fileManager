@@ -102,6 +102,61 @@ set_version() {
         echo -e "${GREEN}✅ Updated README.md${NC}"
     fi
     
+    # Update debian/control version
+    if [ -f "$PROJECT_ROOT/debian/control" ]; then
+        sed -i "s/^Version: [0-9]\+\.[0-9]\+\.[0-9]\+/Version: $new_version/" "$PROJECT_ROOT/debian/control"
+        echo -e "${GREEN}✅ Updated debian/control${NC}"
+    fi
+    
+    # Update Flatpak manifest version
+    if [ -f "$PROJECT_ROOT/flatpak/com.filemanager.FileManager.yaml" ]; then
+        sed -i "s/version: '[^']*'/version: '$new_version'/" "$PROJECT_ROOT/flatpak/com.filemanager.FileManager.yaml"
+        echo -e "${GREEN}✅ Updated flatpak/com.filemanager.FileManager.yaml${NC}"
+    fi
+    
+    # Update Homebrew formula version
+    if [ -f "$PROJECT_ROOT/homebrew/filemanager.rb" ]; then
+        sed -i "s/url \"https:\/\/github\.com\/devonionrouting4Moses\/fileManager\/archive\/v[0-9]\+\.[0-9]\+\.[0-9]\+\.tar\.gz\"/url \"https:\/\/github.com\/devonionrouting4Moses\/fileManager\/archive\/v$new_version.tar.gz\"/" "$PROJECT_ROOT/homebrew/filemanager.rb"
+        sed -i "s/version \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version \"$new_version\"/" "$PROJECT_ROOT/homebrew/filemanager.rb"
+        echo -e "${GREEN}✅ Updated homebrew/filemanager.rb${NC}"
+    fi
+    
+    # Update Windows NSIS installer version
+    if [ -f "$PROJECT_ROOT/windows/installer.nsi" ]; then
+        sed -i "s/Name \"FileManager v[0-9]\+\.[0-9]\+\.[0-9]\+\"/Name \"FileManager v$new_version\"/" "$PROJECT_ROOT/windows/installer.nsi"
+        sed -i "s/OutFile \"FileManager-[0-9]\+\.[0-9]\+\.[0-9]\+-Setup\.exe\"/OutFile \"FileManager-$new_version-Setup.exe\"/" "$PROJECT_ROOT/windows/installer.nsi"
+        sed -i "s/VIProductVersion \"[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\"/VIProductVersion \"$new_version.0\"/" "$PROJECT_ROOT/windows/installer.nsi"
+        sed -i "s/VIAddVersionKey \"ProductVersion\" \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/VIAddVersionKey \"ProductVersion\" \"$new_version\"/" "$PROJECT_ROOT/windows/installer.nsi"
+        sed -i "s/VIAddVersionKey \"FileVersion\" \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/VIAddVersionKey \"FileVersion\" \"$new_version\"/" "$PROJECT_ROOT/windows/installer.nsi"
+        echo -e "${GREEN}✅ Updated windows/installer.nsi${NC}"
+    fi
+    
+    # Update documentation files version
+    if [ -f "$PROJECT_ROOT/IMPLEMENTATION_COMPLETE.md" ]; then
+        sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/IMPLEMENTATION_COMPLETE.md"
+        echo -e "${GREEN}✅ Updated IMPLEMENTATION_COMPLETE.md${NC}"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/IMPLEMENTATION_STATUS.md" ]; then
+        sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/IMPLEMENTATION_STATUS.md"
+        echo -e "${GREEN}✅ Updated IMPLEMENTATION_STATUS.md${NC}"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/VERIFICATION_CHECKLIST.md" ]; then
+        sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/VERIFICATION_CHECKLIST.md"
+        echo -e "${GREEN}✅ Updated VERIFICATION_CHECKLIST.md${NC}"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/PACKAGING_QUICK_START.md" ]; then
+        sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/PACKAGING_QUICK_START.md"
+        echo -e "${GREEN}✅ Updated PACKAGING_QUICK_START.md${NC}"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/FRONTEND_BUNDLING_INDEX.md" ]; then
+        sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/FRONTEND_BUNDLING_INDEX.md"
+        echo -e "${GREEN}✅ Updated FRONTEND_BUNDLING_INDEX.md${NC}"
+    fi
+    
     echo -e "${GREEN}🎉 Version updated to $new_version${NC}"
     echo ""
     echo "Files updated:"
@@ -110,6 +165,15 @@ set_version() {
     echo "  - file_manager/pkg/version/version.go"
     echo "  - rust_ffi/Cargo.toml files"
     echo "  - README.md"
+    echo "  - debian/control"
+    echo "  - flatpak/com.filemanager.FileManager.yaml"
+    echo "  - homebrew/filemanager.rb"
+    echo "  - windows/installer.nsi"
+    echo "  - IMPLEMENTATION_COMPLETE.md"
+    echo "  - IMPLEMENTATION_STATUS.md"
+    echo "  - VERIFICATION_CHECKLIST.md"
+    echo "  - PACKAGING_QUICK_START.md"
+    echo "  - FRONTEND_BUNDLING_INDEX.md"
 }
 
 # Function to bump patch version
@@ -167,6 +231,22 @@ list_versions() {
     
     echo -e "${YELLOW}Cargo.toml files:${NC}"
     find "$PROJECT_ROOT/rust_ffi" -name "Cargo.toml" -type f -exec grep "^version = " {} + 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}debian/control:${NC}"
+    grep "^Version:" "$PROJECT_ROOT/debian/control" 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}Flatpak manifest:${NC}"
+    grep "^version:" "$PROJECT_ROOT/flatpak/com.filemanager.FileManager.yaml" 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}Homebrew formula:${NC}"
+    grep "version \"" "$PROJECT_ROOT/homebrew/filemanager.rb" 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}Windows installer:${NC}"
+    grep "VIProductVersion" "$PROJECT_ROOT/windows/installer.nsi" 2>/dev/null || echo "  Not found"
 }
 
 # Main logic
