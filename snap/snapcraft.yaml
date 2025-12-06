@@ -155,4 +155,4 @@ parts:
     source-type: local
     organize:
       filemanager.desktop: usr/share/applications/filemanager.desktop
-      filemanager.png: usr/share/icons/hicolor/256x256/apps/filemanager.png
+      filemanager.png: usr/share/icons/hicolor/256x256/apps/file.png
