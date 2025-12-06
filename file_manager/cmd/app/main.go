@@ -124,6 +124,9 @@ func main() {
 		case "--help", "-h":
 			showHelp()
 			return
+		case "--frontend-info":
+			handler.PrintFrontendInfo()
+			return
 		case "--web", "-w":
 			// Start web server mode directly
 			if err := handler.StartWebServer(); err != nil {
@@ -143,10 +146,10 @@ func main() {
 	}()
 
 	for {
-		displayMenu()
+		displayMainMenu()
 
 		fmt.Println()
-		displayInputBox("Enter your choice (0-9)")
+		displayInputBox("Enter your choice (1-5)")
 		if !scanner.Scan() {
 			break
 		}
@@ -154,27 +157,16 @@ func main() {
 		choice := strings.TrimSpace(scanner.Text())
 
 		switch choice {
-		case "0":
-			fmt.Println("\n👋 Goodbye!")
-			return
 		case "1":
-			handleCreateFolder(scanner)
+			handleBasicOperations(scanner)
 		case "2":
-			handleCreateFile(scanner)
+			handleAdvancedOperations(scanner)
 		case "3":
-			handleRename(scanner)
+			handleBulkOperations(scanner)
 		case "4":
-			handleDelete(scanner)
-		case "5":
-			handleChangePermissions(scanner)
-		case "6":
-			handleMove(scanner)
-		case "7":
-			handleCopy(scanner)
-		case "8":
-			handleCreateStructure(scanner)
-		case "9":
 			handleWebServerLaunch()
+		case "5":
+			fmt.Println("\n👋 Goodbye!")
 			return
 		default:
 			fmt.Println("❌ Invalid choice. Please try again.")
@@ -201,7 +193,7 @@ func showHelp() {
 	fmt.Println()
 }
 
-func displayMenu() {
+func displayMainMenu() {
 	// ANSI color codes
 	green := "\033[32m"
 	reset := "\033[0m"
@@ -214,16 +206,11 @@ func displayMenu() {
 
 	// Menu items
 	menuItems := []string{
-		"1️⃣  Create Folder",
-		"2️⃣  Create File",
-		"3️⃣  Rename File/Folder",
-		"4️⃣  Delete File/Folder",
-		"5️⃣  Change Permissions",
-		"6️⃣  Move File/Folder",
-		"7️⃣  Copy File/Folder",
-		"8️⃣  Create Structure (Multi-entity)",
-		"9️⃣  Launch Web Interface",
-		"0️⃣  Exit",
+		"1️⃣  Basic Operations",
+		"2️⃣  Advanced Operations",
+		"3️⃣  Bulk Operations",
+		"4️⃣  Web Interface",
+		"5️⃣  Exit",
 	}
 
 	for _, item := range menuItems {
@@ -232,6 +219,89 @@ func displayMenu() {
 	}
 
 	fmt.Printf("%s%s└%s┘%s\n", green, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayBasicOperationsMenu() {
+	// ANSI color codes
+	blue := "\033[34m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with blue border
+	fmt.Printf("%s%s┌%s┐%s\n", blue, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s BASIC OPERATIONS %s│%s\n", blue, bold, strings.Repeat(" ", 16), strings.Repeat(" ", 15), reset)
+	fmt.Printf("%s%s├%s┤%s\n", blue, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Create Folder",
+		"2️⃣  Create File",
+		"3️⃣  Rename File/Folder",
+		"4️⃣  Delete File/Folder",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", blue, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", blue, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayAdvancedOperationsMenu() {
+	// ANSI color codes
+	yellow := "\033[33m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with yellow border
+	fmt.Printf("%s%s┌%s┐%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s ADVANCED OPERATIONS %s│%s\n", yellow, bold, strings.Repeat(" ", 12), strings.Repeat(" ", 12), reset)
+	fmt.Printf("%s%s├%s┤%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Move File/Folder",
+		"2️⃣  Copy File/Folder",
+		"3️⃣  Change Permissions",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", yellow, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayBulkOperationsMenu() {
+	// ANSI color codes
+	magenta := "\033[35m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with magenta border
+	fmt.Printf("%s%s┌%s┐%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s BULK OPERATIONS %s│%s\n", magenta, bold, strings.Repeat(" ", 16), strings.Repeat(" ", 15), reset)
+	fmt.Printf("%s%s├%s┤%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Create Structure (Multi-entity)",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", magenta, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", magenta, bold, strings.Repeat("─", 48), reset)
 	fmt.Println()
 }
 
@@ -264,6 +334,85 @@ func handleWebServerLaunch() {
 
 	if err := handler.StartWebServer(); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Server failed to start: %v\n", err)
+	}
+}
+
+func handleBasicOperations(scanner *bufio.Scanner) {
+	for {
+		displayBasicOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-4)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleCreateFolder(scanner)
+		case "2":
+			handleCreateFile(scanner)
+		case "3":
+			handleRename(scanner)
+		case "4":
+			handleDelete(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
+	}
+}
+
+func handleAdvancedOperations(scanner *bufio.Scanner) {
+	for {
+		displayAdvancedOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-3)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleMove(scanner)
+		case "2":
+			handleCopy(scanner)
+		case "3":
+			handleChangePermissions(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
+	}
+}
+
+func handleBulkOperations(scanner *bufio.Scanner) {
+	for {
+		displayBulkOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-1)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleCreateStructure(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
 	}
 }
 
@@ -447,12 +596,28 @@ func handleDelete(scanner *bufio.Scanner) {
 		return
 	}
 
-	fmt.Printf("⚠️  Are you sure you want to delete '%s'? (yes/no): ", path)
+	// Display confirmation in a styled box
+	red := "\033[31m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
+
+	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ ⚠️  DELETE CONFIRMATION%s │%s\n", red, bold, strings.Repeat(" ", 35), reset)
+	fmt.Printf("%s%s├%s┤%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ Path: %s%s │%s\n", red, bold, path, strings.Repeat(" ", boxWidth-len(path)-8), reset)
+	fmt.Printf("%s%s├%s┤%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ Are you sure you want to delete '%s'? (yes/no)%s │%s\n", red, bold, path, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Are you sure you want to delete '%s'? (yes/no)", path))-4), reset)
+	fmt.Printf("%s%s└%s┘%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Print("> ")
+
 	if !scanner.Scan() {
 		return
 	}
 
 	confirmation := strings.ToLower(strings.TrimSpace(scanner.Text()))
+	fmt.Println()
 	if confirmation != "yes" && confirmation != "y" {
 		fmt.Println("❌ Deletion cancelled")
 		return
@@ -509,11 +674,20 @@ func handleChangePermissions(scanner *bufio.Scanner) {
 
 // displayPermissionInfo shows detailed explanation of the permission mode
 func displayPermissionInfo(modeStr string) {
-	fmt.Println("📋 Permission Breakdown:")
-	fmt.Println("────────────────────────────────────────")
+	// Cyan color for box styling
+	cyan := "\033[36m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+	boxWidth := 60
 
 	if len(modeStr) != 3 {
-		fmt.Println("   Invalid format")
+		fmt.Println()
+		fmt.Printf("%s%s┌%s┐%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+		fmt.Printf("%s%s│ 📋 Permission Breakdown%s │%s\n", cyan, bold, strings.Repeat(" ", 34), reset)
+		fmt.Printf("%s%s├%s┤%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+		fmt.Printf("%s%s│ Invalid format%s │%s\n", cyan, bold, strings.Repeat(" ", 43), reset)
+		fmt.Printf("%s%s└%s┘%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+		fmt.Println()
 		return
 	}
 
@@ -521,67 +695,62 @@ func displayPermissionInfo(modeStr string) {
 	group := string(modeStr[1])
 	others := string(modeStr[2])
 
-	fmt.Printf("   Owner:  %s (%s)\n", owner, decodePermission(owner))
-	fmt.Printf("   Group:  %s (%s)\n", group, decodePermission(group))
-	fmt.Printf("   Others: %s (%s)\n", others, decodePermission(others))
 	fmt.Println()
+	fmt.Printf("%s%s┌%s┐%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ 📋 Permission Breakdown: %s%s │%s\n", cyan, bold, modeStr, strings.Repeat(" ", 29), reset)
+	fmt.Printf("%s%s├%s┤%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Printf("%s%s│ Owner:  %s (%s)%s │%s\n", cyan, bold, owner, decodePermission(owner), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Owner:  %s (%s)", owner, decodePermission(owner)))-4), reset)
+	fmt.Printf("%s%s│ Group:  %s (%s)%s │%s\n", cyan, bold, group, decodePermission(group), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Group:  %s (%s)", group, decodePermission(group)))-4), reset)
+	fmt.Printf("%s%s│ Others: %s (%s)%s │%s\n", cyan, bold, others, decodePermission(others), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Others: %s (%s)", others, decodePermission(others)))-4), reset)
+	fmt.Printf("%s%s├%s┤%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
 
 	// Show common permission patterns
 	switch modeStr {
 	case "755":
-		fmt.Println("📌 Common Use: Directories and executable scripts")
-		fmt.Println("   ✓ Owner can read, write, execute")
-		fmt.Println("   ✓ Group can read and execute")
-		fmt.Println("   ✓ Others can read and execute")
-		fmt.Println("   ⚠ Advantages: Good for shared scripts and directories")
-		fmt.Println("   ⚠ Disadvantages: Others can access/execute")
+		fmt.Printf("%s%s│ 📌 Directories & executable scripts%s │%s\n", cyan, bold, strings.Repeat(" ", 21), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 25), reset)
+		fmt.Printf("%s%s│ ✓ Group: read, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 32), reset)
+		fmt.Printf("%s%s│ ✓ Others: read, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 31), reset)
 
 	case "644":
-		fmt.Println("📌 Common Use: Regular files and documents")
-		fmt.Println("   ✓ Owner can read and write")
-		fmt.Println("   ✓ Group can read only")
-		fmt.Println("   ✓ Others can read only")
-		fmt.Println("   ⚠ Advantages: Safe, prevents accidental modifications")
-		fmt.Println("   ⚠ Disadvantages: Only owner can edit")
+		fmt.Printf("%s%s│ 📌 Regular files & documents%s │%s\n", cyan, bold, strings.Repeat(" ", 28), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
+		fmt.Printf("%s%s│ ✓ Group: read only%s │%s\n", cyan, bold, strings.Repeat(" ", 37), reset)
+		fmt.Printf("%s%s│ ✓ Others: read only%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
 
 	case "700":
-		fmt.Println("📌 Common Use: Private files and directories")
-		fmt.Println("   ✓ Owner can read, write, execute")
-		fmt.Println("   ✗ Group has no access")
-		fmt.Println("   ✗ Others have no access")
-		fmt.Println("   ⚠ Advantages: Maximum privacy and security")
-		fmt.Println("   ⚠ Disadvantages: No one else can access")
+		fmt.Printf("%s%s│ 📌 Private files & directories%s │%s\n", cyan, bold, strings.Repeat(" ", 26), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 25), reset)
+		fmt.Printf("%s%s│ ✗ Group: no access%s │%s\n", cyan, bold, strings.Repeat(" ", 37), reset)
+		fmt.Printf("%s%s│ ✗ Others: no access%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
 
 	case "777":
-		fmt.Println("📌 Common Use: Temporary files (not recommended for production)")
-		fmt.Println("   ✓ Owner can read, write, execute")
-		fmt.Println("   ✓ Group can read, write, execute")
-		fmt.Println("   ✓ Others can read, write, execute")
-		fmt.Println("   ⚠ Advantages: Everyone has full access")
-		fmt.Println("   ⚠ Disadvantages: Security risk, anyone can modify/delete")
+		fmt.Printf("%s%s│ 📌 Temporary files (NOT recommended)%s │%s\n", cyan, bold, strings.Repeat(" ", 19), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 25), reset)
+		fmt.Printf("%s%s│ ✓ Group: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 25), reset)
+		fmt.Printf("%s%s│ ✓ Others: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 24), reset)
 
 	case "600":
-		fmt.Println("📌 Common Use: Sensitive files (configs, keys)")
-		fmt.Println("   ✓ Owner can read and write")
-		fmt.Println("   ✗ Group has no access")
-		fmt.Println("   ✗ Others have no access")
-		fmt.Println("   ⚠ Advantages: Secure, prevents unauthorized access")
-		fmt.Println("   ⚠ Disadvantages: Only owner can read")
+		fmt.Printf("%s%s│ 📌 Sensitive files (configs, keys)%s │%s\n", cyan, bold, strings.Repeat(" ", 21), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
+		fmt.Printf("%s%s│ ✗ Group: no access%s │%s\n", cyan, bold, strings.Repeat(" ", 37), reset)
+		fmt.Printf("%s%s│ ✗ Others: no access%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
 
 	case "750":
-		fmt.Println("📌 Common Use: Project directories")
-		fmt.Println("   ✓ Owner can read, write, execute")
-		fmt.Println("   ✓ Group can read and execute")
-		fmt.Println("   ✗ Others have no access")
-		fmt.Println("   ⚠ Advantages: Team collaboration with privacy")
-		fmt.Println("   ⚠ Disadvantages: Others cannot access")
+		fmt.Printf("%s%s│ 📌 Project directories%s │%s\n", cyan, bold, strings.Repeat(" ", 34), reset)
+		fmt.Printf("%s%s│ ✓ Owner: read, write, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 25), reset)
+		fmt.Printf("%s%s│ ✓ Group: read, execute%s │%s\n", cyan, bold, strings.Repeat(" ", 32), reset)
+		fmt.Printf("%s%s│ ✗ Others: no access%s │%s\n", cyan, bold, strings.Repeat(" ", 36), reset)
 
 	default:
-		fmt.Printf("📌 Custom Permission: %s\n", modeStr)
-		fmt.Println("   Owner: " + decodePermission(owner))
-		fmt.Println("   Group: " + decodePermission(group))
-		fmt.Println("   Others: " + decodePermission(others))
+		fmt.Printf("%s%s│ 📌 Custom Permission: %s%s │%s\n", cyan, bold, modeStr, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("📌 Custom Permission: %s", modeStr))-4), reset)
+		fmt.Printf("%s%s│ Owner: %s%s │%s\n", cyan, bold, decodePermission(owner), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Owner: %s", decodePermission(owner)))-4), reset)
+		fmt.Printf("%s%s│ Group: %s%s │%s\n", cyan, bold, decodePermission(group), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Group: %s", decodePermission(group)))-4), reset)
+		fmt.Printf("%s%s│ Others: %s%s │%s\n", cyan, bold, decodePermission(others), strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Others: %s", decodePermission(others)))-4), reset)
 	}
+
+	fmt.Printf("%s%s└%s┘%s\n", cyan, bold, strings.Repeat("─", boxWidth-2), reset)
+	fmt.Println()
 }
 
 // decodePermission converts a single octal digit to readable format

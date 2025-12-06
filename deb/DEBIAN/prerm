@@ -1,3 +1,39 @@
 #!/bin/bash
 set -e
-echo "Removing FileManager..."
+
+# FileManager APT Pre-Removal Script
+# This script runs before the package is removed
+
+echo "📦 FileManager Pre-Removal Script"
+echo "=================================="
+
+# Backup user configs before removal
+echo "📦 Backing up user configurations..."
+
+for home_dir in /home/*; do
+    if [ -d "$home_dir" ]; then
+        user_config_dir="$home_dir/.config/filemanager"
+        if [ -d "$user_config_dir" ]; then
+            username=$(basename "$home_dir")
+            backup_file="$home_dir/.config/filemanager-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+            
+            if tar czf "$backup_file" -C "$home_dir/.config" filemanager 2>/dev/null; then
+                echo "✅ Backed up config for user: $username"
+                echo "   Location: $backup_file"
+                
+                # Set proper ownership
+                chown "$username:$username" "$backup_file"
+            fi
+        fi
+    fi
+done
+
+echo ""
+echo "=================================="
+echo "✅ Pre-removal checks complete"
+echo ""
+echo "ℹ️  User configurations will be preserved"
+echo "ℹ️  Backups created in ~/.config/"
+echo ""
+
+exit 0

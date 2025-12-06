@@ -10,32 +10,251 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
 )
+
+// ColorScheme defines ANSI color codes
+type ColorScheme struct {
+	Border string // Border color
+	Title  string // Title color
+	Text   string // Text color
+	Reset  string // Reset color
+}
+
+// Predefined color schemes
+var ColorSchemes = map[string]ColorScheme{
+	"cyan": {
+		Border: "\033[36m",   // Cyan
+		Title:  "\033[1;36m", // Bright Cyan
+		Text:   "\033[36m",   // Cyan
+		Reset:  "\033[0m",
+	},
+	"pink": {
+		Border: "\033[35m",   // Magenta/Pink
+		Title:  "\033[1;35m", // Bright Magenta
+		Text:   "\033[35m",   // Magenta
+		Reset:  "\033[0m",
+	},
+	"yellow": {
+		Border: "\033[33m",   // Yellow
+		Title:  "\033[1;33m", // Bright Yellow
+		Text:   "\033[33m",   // Yellow
+		Reset:  "\033[0m",
+	},
+	"gray": {
+		Border: "\033[90m", // Dark Grey
+		Title:  "\033[37m", // Light Grey
+		Text:   "\033[90m", // Dark Grey
+		Reset:  "\033[0m",
+	},
+	"green": {
+		Border: "\033[32m",   // Green
+		Title:  "\033[1;32m", // Bright Green
+		Text:   "\033[32m",   // Green
+		Reset:  "\033[0m",
+	},
+	"purple": {
+		Border: "\033[34m",   // Blue/Purple
+		Title:  "\033[1;34m", // Bright Blue
+		Text:   "\033[34m",   // Blue
+		Reset:  "\033[0m",
+	},
+	"violet": {
+		Border: "\033[38;5;135m",   // Violet
+		Title:  "\033[1;38;5;135m", // Bright Violet
+		Text:   "\033[38;5;135m",   // Violet
+		Reset:  "\033[0m",
+	},
+}
+
+// Color rotation for dynamic changes
+var colorRotation = []string{"cyan", "green", "yellow", "pink", "grey", "purple", "violet"}
+
+// LogBox manages a dynamic rounded-corner box for logs
+type LogBox struct {
+	mu           sync.Mutex
+	logs         []string
+	title        string
+	colorKey     string
+	lastPrint    string // Cache last printed output
+	dynamicColor bool   // Enable dynamic color rotation
+	colorIndex   int    // Current color index
+	ticker       *time.Ticker
+	done         chan bool
+}
+
+// NewLogBox creates a new log box with a title and color scheme
+func NewLogBox(title string, colorScheme string) *LogBox {
+	if _, exists := ColorSchemes[colorScheme]; !exists {
+		colorScheme = "cyan" // Default to cyan
+	}
+	return &LogBox{
+		title:        title,
+		logs:         []string{},
+		colorKey:     colorScheme,
+		dynamicColor: true,
+		colorIndex:   0,
+		done:         make(chan bool),
+	}
+}
+
+// StartColorRotation starts the dynamic color rotation (every 10 seconds)
+func (lb *LogBox) StartColorRotation() {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+
+	if !lb.dynamicColor {
+		return
+	}
+
+	lb.ticker = time.NewTicker(10 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-lb.ticker.C:
+				lb.mu.Lock()
+				lb.colorIndex = (lb.colorIndex + 1) % len(colorRotation)
+				lb.colorKey = colorRotation[lb.colorIndex]
+				lb.printLocked()
+				lb.mu.Unlock()
+			case <-lb.done:
+				return
+			}
+		}
+	}()
+}
+
+// StopColorRotation stops the color rotation
+func (lb *LogBox) StopColorRotation() {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+
+	if lb.ticker != nil {
+		lb.ticker.Stop()
+		lb.done <- true
+	}
+}
+
+// AddLog adds a log message to the box and updates display
+func (lb *LogBox) AddLog(message string) {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+	lb.logs = append(lb.logs, message)
+	lb.printLocked()
+}
+
+// printLocked prints the box (must be called with lock held)
+func (lb *LogBox) printLocked() {
+	colors := ColorSchemes[lb.colorKey]
+
+	// Calculate box width based on longest content
+	maxWidth := len(lb.title) + 4
+	for _, log := range lb.logs {
+		if len(log) > maxWidth {
+			maxWidth = len(log)
+		}
+	}
+	if maxWidth < 60 {
+		maxWidth = 60
+	}
+
+	var output strings.Builder
+
+	// Top border with rounded corners
+	output.WriteString(colors.Border)
+	output.WriteString("╭")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("╮\n")
+
+	// Title
+	titlePadding := (maxWidth - len(lb.title)) / 2
+	output.WriteString(colors.Title)
+	output.WriteString("│")
+	for i := 0; i < titlePadding; i++ {
+		output.WriteString(" ")
+	}
+	output.WriteString(lb.title)
+	for i := 0; i < maxWidth-titlePadding-len(lb.title); i++ {
+		output.WriteString(" ")
+	}
+	output.WriteString("│\n")
+
+	// Separator
+	output.WriteString(colors.Border)
+	output.WriteString("├")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("┤\n")
+
+	// Log messages
+	output.WriteString(colors.Text)
+	for _, logMsg := range lb.logs {
+		output.WriteString("│ ")
+		output.WriteString(logMsg)
+		// Pad to fill width
+		padding := maxWidth - len(logMsg) - 1
+		for i := 0; i < padding; i++ {
+			output.WriteString(" ")
+		}
+		output.WriteString("│\n")
+	}
+
+	// Bottom border with rounded corners
+	output.WriteString(colors.Border)
+	output.WriteString("╰")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("╯\n")
+	output.WriteString(colors.Reset)
+
+	// Only print if output changed
+	newOutput := output.String()
+	if newOutput != lb.lastPrint {
+		// Move cursor up to overwrite previous box
+		if lb.lastPrint != "" {
+			lines := strings.Count(lb.lastPrint, "\n")
+			fmt.Printf("\033[%dA\033[J", lines) // Move up and clear
+		}
+		fmt.Print(newOutput)
+		lb.lastPrint = newOutput
+	}
+}
 
 // StartWebServer starts the HTTP server
 func StartWebServer() error {
-	// Determine the static files directory
-	// Try to use the executable's directory first, then fall back to current directory
-	exePath, err := os.Executable()
-	var staticDir string
+	// Create log box for startup messages with dynamic color rotation
+	box := NewLogBox("🌐 LAUNCHING WEB INTERFACE", "cyan")
+	box.StartColorRotation()
 
-	if err == nil {
-		exeDir := filepath.Dir(exePath)
-		staticDir = filepath.Join(exeDir, "filemanager_frontend")
-	} else {
-		staticDir = "./filemanager_frontend"
+	// Get the stable, single frontend directory
+	frontendDir, err := GetFrontendDir()
+	if err != nil {
+		box.StopColorRotation()
+		return fmt.Errorf("failed to determine frontend directory: %w", err)
 	}
 
-	// Check if directory exists
-	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-		log.Printf("⚠️  Warning: Frontend directory '%s' not found\n", staticDir)
-		log.Println("Creating basic frontend structure...")
-		createBasicFrontend(staticDir)
+	box.AddLog("📍 Using frontend from user config: " + frontendDir)
+
+	// Ensure frontend exists (creates if missing)
+	if err := ensureFrontendExists(frontendDir); err != nil {
+		box.StopColorRotation()
+		return fmt.Errorf("failed to setup frontend: %w", err)
 	}
 
-	// Serve static files from disk (already created by createBasicFrontend)
-	// Wrap with custom handler to add headers and handle missing files
-	fs := http.FileServer(http.Dir(staticDir))
+	box.AddLog("✅ Frontend directory verified: " + frontendDir)
+
+	// Create user config for future reference (non-fatal if it fails)
+	CreateDefaultUserConfig(frontendDir)
+
+	box.AddLog("ℹ️  Config file already exists: " + os.ExpandEnv("$HOME/.config/filemanager/config.yaml"))
+
+	// Serve static files from the stable directory
+	fs := http.FileServer(http.Dir(frontendDir))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Add CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -68,10 +287,13 @@ func StartWebServer() error {
 	port := "8080"
 	url := fmt.Sprintf("http://localhost:%s", port)
 
+	box.AddLog("🌐 Server running: " + url)
+
 	// Try to open browser automatically
 	openBrowser(url)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		box.StopColorRotation()
 		return fmt.Errorf("server failed to start: %w", err)
 	}
 	return nil

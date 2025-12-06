@@ -1,9 +1,17 @@
 Package: filemanager
 Version: 2.0.0
+Section: utils
+Priority: optional
 Architecture: amd64
-Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
-Description: Modern file manager with Rust+Go backend
- FileManager v2 is a dual-mode file manager with terminal and web interfaces.
- Built with Rust for performance and Go for flexibility.
-Homepage: https://github.com/devonionrouting4Moses/fileManager
-Depends: libc6, libgcc-s1, libstdc++6
+Maintainer: Your Name <you@example.com>
+Homepage: https://github.com/yourusername/filemanager
+Depends: libc6 (>= 2.31)
+Description: Cross-platform file management tool
+ FileManager provides both CLI and web interface for file operations.
+ .
+ Features include:
+ - File and folder operations (create, rename, delete, move, copy)
+ - Batch operations for multiple files
+ - Project template creation
+ - Web-based interface for remote access
+ - Cross-platform support (Linux, macOS, Windows, HarmonyOS)

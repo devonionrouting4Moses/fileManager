@@ -1,0 +1,2 @@
+filemanager.bin usr/bin/filemanager
+frontend/* usr/share/filemanager-staging/frontend/

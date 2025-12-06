@@ -18,7 +18,7 @@ const (
 	AppName        = "FileManager"
 	repoOwner      = "devonionrouting4Moses"
 	repoName       = "fileManager"
-	defaultVersion = "2.0.0"
+	defaultVersion = "2.0.1"
 )
 
 // versionOnce ensures version is loaded only once
