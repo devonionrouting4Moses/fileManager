@@ -22,10 +22,12 @@ NC='\033[0m'
 
 # Check what to build
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [linux-amd64] [linux-arm64] [windows-amd64] [harmonyos] [all]"
+    echo "Usage: $0 [linux-amd64|amd64] [linux-arm64|arm64] [windows-amd64] [harmonyos] [all]"
     echo ""
     echo "Examples:"
     echo "  $0 linux-amd64          # Build for Linux amd64 only"
+    echo "  $0 amd64                # Build for Linux amd64 only (shorthand)"
+    echo "  $0 arm64                # Build for Linux arm64 only (shorthand)"
     echo "  $0 linux-amd64 windows-amd64  # Build for Linux and Windows"
     echo "  $0 all                  # Build for all platforms"
     echo ""
@@ -39,10 +41,10 @@ BUILD_HARMONYOS=0
 
 for arg in "$@"; do
     case $arg in
-        linux-amd64)
+        linux-amd64|amd64)
             BUILD_LINUX_AMD64=1
             ;;
-        linux-arm64)
+        linux-arm64|arm64)
             BUILD_LINUX_ARM64=1
             ;;
         windows-amd64)

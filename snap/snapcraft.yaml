@@ -1,6 +1,6 @@
 name: filemanager
 base: core24
-version: '2.0.0'
+version: '2.0.1'
 title: FileManager
 summary: Modern file manager with Rust+Go backend
 description: |

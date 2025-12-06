@@ -44,33 +44,16 @@ cp filemanager deb/usr/local/bin/
 cp rust_ffi/target/release/libfs_operations_core.so deb/usr/local/lib/
 chmod +x deb/usr/local/bin/filemanager
 
-cat > deb/DEBIAN/control << 'EOF'
-Package: filemanager
-Version: 2.0.0
-Architecture: amd64
-Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
-Description: Modern file manager with Rust+Go backend
- FileManager v2 is a dual-mode file manager with terminal and web interfaces.
- Built with Rust for performance and Go for flexibility.
-Homepage: https://github.com/devonionrouting4Moses/fileManager
-Depends: libc6, libgcc-s1, libstdc++6
-EOF
+# Copy debian/ files (single source of truth)
+cp debian/control deb/DEBIAN/control
+cp debian/postinst deb/DEBIAN/postinst
+cp debian/prerm deb/DEBIAN/prerm
+cp debian/postrm deb/DEBIAN/postrm
 
-cat > deb/DEBIAN/postinst << 'EOF'
-#!/bin/bash
-set -e
-ldconfig
-mkdir -p ~/.config/filemanager
-echo "FileManager installed successfully!"
-EOF
+# Make scripts executable
 chmod +x deb/DEBIAN/postinst
-
-cat > deb/DEBIAN/prerm << 'EOF'
-#!/bin/bash
-set -e
-echo "Removing FileManager..."
-EOF
 chmod +x deb/DEBIAN/prerm
+chmod +x deb/DEBIAN/postrm
 
 dpkg-deb --build deb filemanager_${VERSION}_${ARCH}.deb
 echo "✅ DEB package created: filemanager_${VERSION}_${ARCH}.deb"

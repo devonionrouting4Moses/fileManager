@@ -124,6 +124,9 @@ func main() {
 		case "--help", "-h":
 			showHelp()
 			return
+		case "--frontend-info":
+			handler.PrintFrontendInfo()
+			return
 		case "--web", "-w":
 			// Start web server mode directly
 			if err := handler.StartWebServer(); err != nil {
@@ -143,10 +146,10 @@ func main() {
 	}()
 
 	for {
-		displayMenu()
+		displayMainMenu()
 
 		fmt.Println()
-		displayInputBox("Enter your choice (0-9)")
+		displayInputBox("Enter your choice (1-5)")
 		if !scanner.Scan() {
 			break
 		}
@@ -154,27 +157,16 @@ func main() {
 		choice := strings.TrimSpace(scanner.Text())
 
 		switch choice {
-		case "0":
-			fmt.Println("\n👋 Goodbye!")
-			return
 		case "1":
-			handleCreateFolder(scanner)
+			handleBasicOperations(scanner)
 		case "2":
-			handleCreateFile(scanner)
+			handleAdvancedOperations(scanner)
 		case "3":
-			handleRename(scanner)
+			handleBulkOperations(scanner)
 		case "4":
-			handleDelete(scanner)
-		case "5":
-			handleChangePermissions(scanner)
-		case "6":
-			handleMove(scanner)
-		case "7":
-			handleCopy(scanner)
-		case "8":
-			handleCreateStructure(scanner)
-		case "9":
 			handleWebServerLaunch()
+		case "5":
+			fmt.Println("\n👋 Goodbye!")
 			return
 		default:
 			fmt.Println("❌ Invalid choice. Please try again.")
@@ -201,7 +193,7 @@ func showHelp() {
 	fmt.Println()
 }
 
-func displayMenu() {
+func displayMainMenu() {
 	// ANSI color codes
 	green := "\033[32m"
 	reset := "\033[0m"
@@ -214,16 +206,11 @@ func displayMenu() {
 
 	// Menu items
 	menuItems := []string{
-		"1️⃣  Create Folder",
-		"2️⃣  Create File",
-		"3️⃣  Rename File/Folder",
-		"4️⃣  Delete File/Folder",
-		"5️⃣  Change Permissions",
-		"6️⃣  Move File/Folder",
-		"7️⃣  Copy File/Folder",
-		"8️⃣  Create Structure (Multi-entity)",
-		"9️⃣  Launch Web Interface",
-		"0️⃣  Exit",
+		"1️⃣  Basic Operations",
+		"2️⃣  Advanced Operations",
+		"3️⃣  Bulk Operations",
+		"4️⃣  Web Interface",
+		"5️⃣  Exit",
 	}
 
 	for _, item := range menuItems {
@@ -232,6 +219,89 @@ func displayMenu() {
 	}
 
 	fmt.Printf("%s%s└%s┘%s\n", green, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayBasicOperationsMenu() {
+	// ANSI color codes
+	blue := "\033[34m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with blue border
+	fmt.Printf("%s%s┌%s┐%s\n", blue, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s BASIC OPERATIONS %s│%s\n", blue, bold, strings.Repeat(" ", 16), strings.Repeat(" ", 15), reset)
+	fmt.Printf("%s%s├%s┤%s\n", blue, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Create Folder",
+		"2️⃣  Create File",
+		"3️⃣  Rename File/Folder",
+		"4️⃣  Delete File/Folder",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", blue, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", blue, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayAdvancedOperationsMenu() {
+	// ANSI color codes
+	yellow := "\033[33m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with yellow border
+	fmt.Printf("%s%s┌%s┐%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s ADVANCED OPERATIONS %s│%s\n", yellow, bold, strings.Repeat(" ", 12), strings.Repeat(" ", 12), reset)
+	fmt.Printf("%s%s├%s┤%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Move File/Folder",
+		"2️⃣  Copy File/Folder",
+		"3️⃣  Change Permissions",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", yellow, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", yellow, bold, strings.Repeat("─", 48), reset)
+	fmt.Println()
+}
+
+func displayBulkOperationsMenu() {
+	// ANSI color codes
+	magenta := "\033[35m"
+	reset := "\033[0m"
+	bold := "\033[1m"
+
+	// Menu header with magenta border
+	fmt.Printf("%s%s┌%s┐%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+	fmt.Printf("%s%s│%s BULK OPERATIONS %s│%s\n", magenta, bold, strings.Repeat(" ", 16), strings.Repeat(" ", 15), reset)
+	fmt.Printf("%s%s├%s┤%s\n", magenta, bold, strings.Repeat("─", 48), reset)
+
+	// Menu items
+	menuItems := []string{
+		"1️⃣  Create Structure (Multi-entity)",
+		"0️⃣  Back to Main Menu",
+	}
+
+	for _, item := range menuItems {
+		padding := 48 - len(item) - 2
+		fmt.Printf("%s%s│ %s%s │%s\n", magenta, bold, item, strings.Repeat(" ", padding), reset)
+	}
+
+	fmt.Printf("%s%s└%s┘%s\n", magenta, bold, strings.Repeat("─", 48), reset)
 	fmt.Println()
 }
 
@@ -264,6 +334,85 @@ func handleWebServerLaunch() {
 
 	if err := handler.StartWebServer(); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Server failed to start: %v\n", err)
+	}
+}
+
+func handleBasicOperations(scanner *bufio.Scanner) {
+	for {
+		displayBasicOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-4)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleCreateFolder(scanner)
+		case "2":
+			handleCreateFile(scanner)
+		case "3":
+			handleRename(scanner)
+		case "4":
+			handleDelete(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
+	}
+}
+
+func handleAdvancedOperations(scanner *bufio.Scanner) {
+	for {
+		displayAdvancedOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-3)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleMove(scanner)
+		case "2":
+			handleCopy(scanner)
+		case "3":
+			handleChangePermissions(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
+	}
+}
+
+func handleBulkOperations(scanner *bufio.Scanner) {
+	for {
+		displayBulkOperationsMenu()
+
+		fmt.Println()
+		displayInputBox("Enter your choice (0-1)")
+		if !scanner.Scan() {
+			break
+		}
+
+		choice := strings.TrimSpace(scanner.Text())
+
+		switch choice {
+		case "0":
+			return
+		case "1":
+			handleCreateStructure(scanner)
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
+		}
 	}
 }
 
@@ -459,7 +608,7 @@ func handleDelete(scanner *bufio.Scanner) {
 	fmt.Printf("%s%s├%s┤%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Printf("%s%s│ Path: %s%s │%s\n", red, bold, path, strings.Repeat(" ", boxWidth-len(path)-8), reset)
 	fmt.Printf("%s%s├%s┤%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
-	fmt.Printf("%s%s│ Are you sure? (yes/no)%s │%s\n", red, bold, strings.Repeat(" ", 34), reset)
+	fmt.Printf("%s%s│ Are you sure you want to delete '%s'? (yes/no)%s │%s\n", red, bold, path, strings.Repeat(" ", boxWidth-len(fmt.Sprintf("Are you sure you want to delete '%s'? (yes/no)", path))-4), reset)
 	fmt.Printf("%s%s└%s┘%s\n", red, bold, strings.Repeat("─", boxWidth-2), reset)
 	fmt.Print("> ")
 

@@ -1,0 +1,255 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                     FileManager Build System Architecture                       ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          USER ENTRY POINT                                       │
+│                                                                                  │
+│  bash scripts/build-all-platforms.sh [platform1] [platform2] ... [platformN]   │
+│                                                                                  │
+│  Examples:                                                                       │
+│  • bash scripts/build-all-platforms.sh linux-amd64                             │
+│  • bash scripts/build-all-platforms.sh linux-amd64 windows-amd64               │
+│  • bash scripts/build-all-platforms.sh all                                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    build-all-platforms.sh (ORCHESTRATOR)                        │
+│                                                                                  │
+│  1. Read VERSION file                                                           │
+│  2. Parse arguments (linux-amd64, linux-arm64, windows-amd64, harmonyos, all)  │
+│  3. Set flags for requested platforms                                          │
+│  4. Call appropriate platform-specific scripts                                 │
+│  5. Track success/failure                                                      │
+│  6. Show summary of artifacts                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┬──────────────────┐
+                    │                 │                 │                  │
+                    ▼                 ▼                 ▼                  ▼
+        ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+        │ build-linux-     │  │ build-linux-     │  │ build-windows-   │  │ build-harmonyos  │
+        │ amd64.sh         │  │ arm64.sh         │  │ amd64.sh         │  │ .sh              │
+        │                  │  │                  │  │                  │  │                  │
+        │ Creates:         │  │ Creates:         │  │ Creates:         │  │ Creates:         │
+        │ • DEB (amd64)    │  │ • DEB (arm64)    │  │ • EXE            │  │ • HAP            │
+        │ • TAR.GZ (amd64) │  │ • TAR.GZ (arm64) │  │ • ZIP            │  │ • Bundle         │
+        │ • APT (amd64)    │  │ • APT (arm64)    │  │ • (NSIS)         │  │                  │
+        │ • PKGBUILD       │  │                  │  │                  │  │                  │
+        └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘
+                    │                 │                 │                  │
+                    └─────────────────┼─────────────────┴──────────────────┘
+                                      │
+                                      ▼
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                   BUILD ARTIFACTS CREATED                        │
+        │                                                                  │
+        │  Linux AMD64:                                                   │
+        │  • filemanager_2.0.0_amd64.deb                                 │
+        │  • filemanager-2.0.0-linux-amd64.tar.gz                        │
+        │  • filemanager-apt_2.0.0_amd64.deb                             │
+        │  • arch/PKGBUILD                                               │
+        │                                                                  │
+        │  Linux ARM64:                                                   │
+        │  • filemanager_2.0.0_arm64.deb                                 │
+        │  • filemanager-2.0.0-linux-arm64.tar.gz                        │
+        │  • filemanager-apt_2.0.0_arm64.deb                             │
+        │                                                                  │
+        │  Windows:                                                       │
+        │  • filemanager.exe                                             │
+        │  • filemanager-2.0.0-windows-amd64.zip                         │
+        │                                                                  │
+        │  HarmonyOS:                                                     │
+        │  • harmonyos/entry/build/outputs/hap/                          │
+        └──────────────────────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         ARGUMENT PARSING FLOW                                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Input: bash build-all-platforms.sh linux-amd64 windows-amd64
+
+                              ▼
+        ┌──────────────────────────────────────────┐
+        │ Parse Arguments (lines 40-65)            │
+        │                                          │
+        │ for arg in "$@"; do                      │
+        │   case $arg in                           │
+        │     linux-amd64)                         │
+        │       BUILD_LINUX_AMD64=1                │
+        │     windows-amd64)                       │
+        │       BUILD_WINDOWS=1                    │
+        │   esac                                   │
+        │ done                                     │
+        └──────────────────────────────────────────┘
+                              ▼
+        ┌──────────────────────────────────────────┐
+        │ Flags Set:                               │
+        │ BUILD_LINUX_AMD64=1                      │
+        │ BUILD_LINUX_ARM64=0                      │
+        │ BUILD_WINDOWS=1                          │
+        │ BUILD_HARMONYOS=0                        │
+        └──────────────────────────────────────────┘
+                              ▼
+        ┌──────────────────────────────────────────┐
+        │ Conditional Execution (lines 70-115)     │
+        │                                          │
+        │ if [ $BUILD_LINUX_AMD64 -eq 1 ]; then   │
+        │   bash build-linux-amd64.sh              │
+        │ fi                                       │
+        │                                          │
+        │ if [ $BUILD_WINDOWS -eq 1 ]; then       │
+        │   bash build-windows-amd64.sh            │
+        │ fi                                       │
+        └──────────────────────────────────────────┘
+                              ▼
+        ┌──────────────────────────────────────────┐
+        │ Result:                                  │
+        │ • build-linux-amd64.sh EXECUTED          │
+        │ • build-linux-arm64.sh SKIPPED           │
+        │ • build-windows-amd64.sh EXECUTED        │
+        │ • build-harmonyos.sh SKIPPED             │
+        └──────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         QUICK REFERENCE TABLE                                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Command                                    What It Does
+──────────────────────────────────────────────────────────────────────────────────
+bash build-all-platforms.sh                Show help/usage
+
+bash build-all-platforms.sh linux-amd64    Build for Linux AMD64 only
+                                           Creates: DEB, TAR.GZ, APT, PKGBUILD
+
+bash build-all-platforms.sh linux-arm64    Build for Linux ARM64 only
+                                           Creates: DEB, TAR.GZ, APT
+
+bash build-all-platforms.sh windows-amd64  Build for Windows only
+                                           Creates: EXE, ZIP
+
+bash build-all-platforms.sh harmonyos      Build for HarmonyOS only
+                                           Creates: HAP
+
+bash build-all-platforms.sh \              Build for Linux (both architectures)
+  linux-amd64 linux-arm64                  Creates: DEB, TAR.GZ, APT for both
+
+bash build-all-platforms.sh all            Build for ALL platforms
+                                           Creates: All packages for all platforms
+
+bash build-linux-amd64.sh                  Direct call (skip orchestrator)
+                                           Same as: build-all-platforms.sh linux-amd64
+
+bash build-linux-arm64.sh                  Direct call (skip orchestrator)
+                                           Same as: build-all-platforms.sh linux-arm64
+
+bash build-windows-amd64.sh                Direct call (skip orchestrator)
+                                           Same as: build-all-platforms.sh windows-amd64
+
+bash build-harmonyos.sh                    Direct call (skip orchestrator)
+                                           Same as: build-all-platforms.sh harmonyos
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         TYPICAL BUILD WORKFLOW                                  ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Step 1: Navigate to project
+  $ cd /path/to/FileManager/file_manager_v1
+
+Step 2: Update version (optional)
+  $ echo "2.1.0" > VERSION
+
+Step 3: Build for all platforms
+  $ bash scripts/build-all-platforms.sh all
+  
+  Output:
+  🔨 FileManager v2.0.0 - Multi-Platform Build
+  ==================================================
+  
+  Building for Linux amd64...
+  ✅ Linux amd64 build completed
+  
+  Building for Linux arm64...
+  ✅ Linux arm64 build completed
+  
+  Building for Windows amd64...
+  ✅ Windows amd64 build completed
+  
+  Building for HarmonyOS...
+  ✅ HarmonyOS build completed
+  
+  🎉 All requested builds completed!
+
+Step 4: Verify builds were created
+  $ ls -lh filemanager_*.deb
+  $ ls -lh filemanager-*.tar.gz
+  $ ls -lh filemanager.exe
+  $ ls -lh filemanager-*.zip
+
+Step 5: Test installation
+  $ sudo apt install ./filemanager_2.0.0_amd64.deb
+  $ filemanager --frontend-info
+  $ bash scripts/verify-security.sh
+
+Step 6: Uninstall
+  $ sudo apt remove filemanager
+
+Step 7: Upload to repositories
+  - GitHub Releases
+  - APT Repository
+  - Snap Store
+  - Homebrew
+  - Windows releases
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         PLATFORM CAPABILITIES                                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Platform          Architecture  Package Type  Security Features
+──────────────────────────────────────────────────────────────────────────────────
+Linux AMD64       x86_64        DEB           ✓ postinst/prerm/postrm scripts
+                                TAR.GZ        ✓ Frontend resolver
+                                APT           ✓ Config management
+                                PKGBUILD      ✓ Proper permissions
+
+Linux ARM64       aarch64       DEB           ✓ postinst/prerm/postrm scripts
+                                TAR.GZ        ✓ Frontend resolver
+                                APT           ✓ Config management
+                                              ✓ Cross-compilation
+
+Windows AMD64     x86_64        EXE           ✓ ACL configuration
+                                ZIP           ✓ Frontend resolver
+                                              ✓ Portable mode
+
+HarmonyOS         ARM64         HAP           ✓ Sandboxed environment
+                                              ✓ App store integration
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         TROUBLESHOOTING                                         ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Problem: Build fails for one platform
+Solution: Fix the issue and run again. The script will rebuild all.
+          bash scripts/build-all-platforms.sh all
+
+Problem: Missing dependencies
+Solution: Install build tools
+          sudo apt-get install -y build-essential cargo rustc golang-go
+
+Problem: Only want to rebuild one platform
+Solution: Call the platform script directly
+          bash scripts/build-linux-amd64.sh
+
+Problem: Want to see what will be built
+Solution: Run with no arguments to see help
+          bash scripts/build-all-platforms.sh
+
+Problem: Build takes too long
+Solution: Build only needed platforms
+          bash scripts/build-all-platforms.sh linux-amd64

@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+# FileManager APT Post-Removal Script
+# This script runs after the package is removed
+
+echo "📦 FileManager Post-Removal Script"
+echo "==================================="
+
+# Remove system files
+echo "🗑️  Removing system files..."
+
+# Remove frontend directory
+if [ -d "/usr/share/filemanager/frontend" ]; then
+    rm -rf /usr/share/filemanager/frontend
+    echo "✅ Removed: /usr/share/filemanager/frontend"
+fi
+
+# Remove system config (only if it's the default one)
+if [ -f "/etc/filemanager/config.yaml" ]; then
+    # Check if it's the default system config
+    if grep -q "System-wide frontend directory" /etc/filemanager/config.yaml 2>/dev/null; then
+        rm -f /etc/filemanager/config.yaml
+        echo "✅ Removed: /etc/filemanager/config.yaml"
+    fi
+fi
+
+# Remove config directory if empty
+if [ -d "/etc/filemanager" ]; then
+    if [ -z "$(ls -A /etc/filemanager)" ]; then
+        rmdir /etc/filemanager
+        echo "✅ Removed: /etc/filemanager (empty)"
+    else
+        echo "ℹ️  Kept /etc/filemanager (contains user files)"
+    fi
+fi
+
+# Remove staging directory if it exists
+if [ -d "/usr/share/filemanager-staging" ]; then
+    rm -rf /usr/share/filemanager-staging
+    echo "✅ Removed: /usr/share/filemanager-staging"
+fi
+
+echo ""
+echo "==================================="
+echo "✅ FileManager uninstalled"
+echo ""
+echo "ℹ️  User configurations preserved in:"
+echo "   ~/.config/filemanager/"
+echo ""
+echo "ℹ️  Backups available in:"
+echo "   ~/.config/filemanager-backup-*.tar.gz"
+echo ""
+echo "💡 To restore your config after reinstalling:"
+echo "   tar xzf ~/.config/filemanager-backup-*.tar.gz -C ~/.config/"
+echo ""
+
+exit 0

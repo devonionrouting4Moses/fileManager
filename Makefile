@@ -34,8 +34,9 @@ go: rust
 	cd file_manager && \
 	CGO_ENABLED=1 \
 	CGO_LDFLAGS="-L../$(RUST_DIR)/target/release -lfs_operations_core -ldl -lpthread -lm" \
-	go build -ldflags="-s -w" -o ../$(APP_NAME) $(GO_MAIN)
-	@echo "✅ Go binary built: ./$(APP_NAME)"
+	go build -ldflags="-s -w" -o ../$(APP_NAME).bin $(GO_MAIN)
+	@chmod +x ../$(APP_NAME).sh
+	@echo "✅ Go binary built: ./$(APP_NAME).bin (wrapper: ./$(APP_NAME).sh)"
 
 # Development build (with debug symbols)
 dev:
@@ -44,27 +45,25 @@ dev:
 	cd file_manager && \
 	CGO_ENABLED=1 \
 	CGO_LDFLAGS="-L../$(RUST_DIR)/target/debug -lfs_operations_core" \
-	go build -race -o ../$(APP_NAME) $(GO_MAIN)
+	go build -race -o ../$(APP_NAME).bin $(GO_MAIN)
+	@chmod +x ../$(APP_NAME).sh
 	@echo "✅ Development build complete"
 
 # Run the application
 run: all
 	@echo "🚀 Running $(APP_NAME)..."
-	@LD_LIBRARY_PATH=$(RUST_DIR)/target/release:$$LD_LIBRARY_PATH \
-	DYLD_LIBRARY_PATH=$(RUST_DIR)/target/release:$$DYLD_LIBRARY_PATH \
-	./$(APP_NAME)
+	@./$(APP_NAME).sh
 
 # Run web server mode
 web: all
 	@echo "🌐 Starting web server..."
-	@LD_LIBRARY_PATH=$(RUST_DIR)/target/release:$$LD_LIBRARY_PATH \
-	DYLD_LIBRARY_PATH=$(RUST_DIR)/target/release:$$DYLD_LIBRARY_PATH \
-	./$(APP_NAME) --web
+	@./$(APP_NAME).sh --web
 
 # Install to system
 install: all
 	@echo "📦 Installing $(APP_NAME)..."
-	sudo install -m 755 $(APP_NAME) $(INSTALL_PREFIX)/bin/
+	sudo install -m 755 $(APP_NAME).bin $(INSTALL_PREFIX)/bin/$(APP_NAME).bin
+	sudo install -m 755 $(APP_NAME).sh $(INSTALL_PREFIX)/bin/$(APP_NAME)
 	sudo install -m 644 $(RUST_DIR)/target/release/$(LIB_NAME) $(INSTALL_PREFIX)/lib/
 ifeq ($(UNAME_S),Linux)
 	sudo ldconfig

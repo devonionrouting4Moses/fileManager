@@ -85,33 +85,16 @@ cp filemanager-arm64 deb-arm64/usr/local/bin/filemanager
 cp rust_ffi/target/aarch64-unknown-linux-gnu/release/libfs_operations_core.so deb-arm64/usr/local/lib/
 chmod +x deb-arm64/usr/local/bin/filemanager
 
-cat > deb-arm64/DEBIAN/control << 'EOF'
-Package: filemanager
-Version: 2.0.0
-Architecture: arm64
-Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
-Description: Modern file manager with Rust+Go backend
- FileManager v2 is a dual-mode file manager with terminal and web interfaces.
- Built with Rust for performance and Go for flexibility.
-Homepage: https://github.com/devonionrouting4Moses/fileManager
-Depends: libc6, libgcc-s1, libstdc++6
-EOF
+# Copy debian/ files (single source of truth)
+cp debian/control deb-arm64/DEBIAN/control
+cp debian/postinst deb-arm64/DEBIAN/postinst
+cp debian/prerm deb-arm64/DEBIAN/prerm
+cp debian/postrm deb-arm64/DEBIAN/postrm
 
-cat > deb-arm64/DEBIAN/postinst << 'EOF'
-#!/bin/bash
-set -e
-ldconfig
-mkdir -p ~/.config/filemanager
-echo "FileManager installed successfully!"
-EOF
+# Make scripts executable
 chmod +x deb-arm64/DEBIAN/postinst
-
-cat > deb-arm64/DEBIAN/prerm << 'EOF'
-#!/bin/bash
-set -e
-echo "Removing FileManager..."
-EOF
 chmod +x deb-arm64/DEBIAN/prerm
+chmod +x deb-arm64/DEBIAN/postrm
 
 dpkg-deb --build deb-arm64 filemanager_${VERSION}_${ARCH}.deb
 echo "✅ DEB package created: filemanager_${VERSION}_${ARCH}.deb"

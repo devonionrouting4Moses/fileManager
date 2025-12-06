@@ -407,7 +407,7 @@ filemanager --version
 #### Ubuntu/Debian
 ```bash
 # Via DEB package (when available)
-wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v0.1.2/filemanager_0.1.2_amd64.deb
+wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v2.0.0/filemanager_0.1.2_amd64.deb
 sudo dpkg -i filemanager_0.1.2_amd64.deb
 sudo apt install -f  # Fix dependencies if needed
 ```
@@ -468,8 +468,8 @@ The project includes a comprehensive release workflow (`.github/workflows/releas
 
 ```bash
 # Create a version tag
-git tag v0.1.2
-git push origin v0.1.2
+git tag v2.0.0
+git push origin v2.0.0
 
 # GitHub Actions automatically:
 # - Builds for all platforms
@@ -604,7 +604,7 @@ FileManager uses **Semantic Versioning (SemVer)** with a **hybrid notification a
 
 ```
 Version Format: MAJOR.MINOR.PATCH
-Example: v1.5.0
+Example: v2.0.0
 
 🔧 PATCH (v1.5.Z) - Bug fixes, security patches
    → Silent/automatic installation
@@ -653,25 +653,25 @@ sudo snap refresh filemanager
 #### DEB Package
 ```bash
 # Download new version
-wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v0.1.3/filemanager_0.1.3_amd64.deb
+wget https://github.com/DevChigarlicMoses/FileManager/releases/download/v2.0.0/filemanager_0.1.3_amd64.deb
 sudo dpkg -i filemanager_0.1.3_amd64.deb
 ```
 
 ### Update Notifications
 
-**PATCH Updates** (e.g., v1.0.8 → v1.0.9)
+**PATCH Updates** (e.g., v2.0.0 → v2.0.1)
 ```
-🔧 PATCH UPDATE AVAILABLE: v1.0.8 → v1.0.9
+🔧 PATCH UPDATE AVAILABLE: v2.0.0 → v2.0.1
 ─ Security & Bug Fixes ─
 
 ✅ This is a safe, backwards-compatible update.
 💡 It will be installed automatically on next restart.
 ```
 
-**MINOR Updates** (e.g., v1.2.5 → v1.3.0)
+**MINOR Updates** (e.g., v2.0.0 → v2.1.0)
 ```
 ════════════════════════════════════════════════════════════
-║ ✨ NEW FEATURES AVAILABLE: v1.2.5 → v1.3.0
+║ ✨ NEW FEATURES AVAILABLE: v2.0.0 → v2.1.0
 ║ ────────────────────────────────────────────────────────
 ║ 📊 Update Type: MINOR (New Features & Improvements)
 ║ 📈 User Impact: Low to Moderate
@@ -683,13 +683,13 @@ sudo dpkg -i filemanager_0.1.3_amd64.deb
 ════════════════════════════════════════════════════════════
 ```
 
-**MAJOR Updates** (e.g., v1.5.0 → v2.0.0)
+**MAJOR Updates** (e.g., v2.0.0 → v3.0.0)
 ```
 ══════════════════════════════════════════════════════════════════
 ║                  🚀 MAJOR UPGRADE AVAILABLE                     ║
 ║                                                                  ║
-║  Current Version: v1.5.0
-║  Available Version: v2.0.0
+║  Current Version: v2.0.0
+║  Available Version: v3.0.0
 ║                                                                  ║
 ║  ⚠️  IMPORTANT: This is a major upgrade with breaking changes.  ║
 ║  ✅ Action Required: Please review release notes before updating.
@@ -784,9 +784,9 @@ See [ROADMAP.md](./ROADMAP.md) for detailed future plans.
 
 ## 📈 Version History
 
-- **v0.1.2** - Current version (dual-mode with web interface)
-- **v0.1.1** - Previous release
-- **v0.1.0** - Initial release
+- **v2.0.0** - Current version (dual-mode with web interface)
+- **v2.0.0** - Previous release
+- **v2.0.0** - Initial release
 
 ---
 

@@ -1,5 +1,123 @@
 #!/bin/bash
 set -e
-ldconfig
-mkdir -p ~/.config/filemanager
-echo "FileManager installed successfully!"
+
+# FileManager APT Post-Installation Script
+# This script runs after the package is installed
+
+FRONTEND_DIR="/usr/share/filemanager/frontend"
+CONFIG_DIR="/etc/filemanager"
+
+echo "📦 FileManager Post-Installation Script"
+echo "=========================================="
+
+# Create system frontend directory with restrictive permissions
+echo "📂 Creating frontend directory..."
+mkdir -p "$FRONTEND_DIR"
+
+# Copy frontend files from package staging area
+if [ -d "/usr/share/filemanager-staging/frontend" ]; then
+    echo "📋 Copying frontend files..."
+    cp -r /usr/share/filemanager-staging/frontend/* "$FRONTEND_DIR/" 2>/dev/null || true
+    
+    # Remove staging directory
+    rm -rf /usr/share/filemanager-staging
+fi
+
+# 🛡️ SECURITY: Set restrictive permissions
+echo "🔒 Setting security permissions..."
+
+# Directory permissions: rwxr-xr-x (755)
+chmod 755 "$FRONTEND_DIR"
+find "$FRONTEND_DIR" -type d -exec chmod 755 {} \;
+
+# File permissions: rw-r--r-- (644)
+find "$FRONTEND_DIR" -type f -exec chmod 644 {} \;
+
+# Ownership: root:root
+chown -R root:root "$FRONTEND_DIR"
+
+# Create system config directory
+echo "⚙️  Creating config directory..."
+mkdir -p "$CONFIG_DIR"
+chown root:root "$CONFIG_DIR"
+chmod 755 "$CONFIG_DIR"
+
+# Create default system config (if not exists)
+if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
+    echo "📝 Creating system configuration..."
+    cat > "$CONFIG_DIR/config.yaml" <<EOF
+# FileManager System Configuration
+# This file is read-only and managed by the package manager
+# Users should not edit this file directly
+
+# System-wide frontend directory
+frontend_dir: /usr/share/filemanager/frontend
+EOF
+    chmod 644 "$CONFIG_DIR/config.yaml"
+    chown root:root "$CONFIG_DIR/config.yaml"
+fi
+
+# Create user config directory template (for new users)
+echo "👤 Creating user config template..."
+mkdir -p /etc/skel/.config/filemanager
+cat > /etc/skel/.config/filemanager/config.yaml <<EOF
+# FileManager User Configuration
+# This file is automatically created for new users
+# Edit this file to customize FileManager behavior
+
+# Frontend directory path (optional)
+# Leave commented to use system default
+# frontend_dir: /usr/share/filemanager/frontend
+
+# You can also override with environment variable:
+# export FILEMANAGER_FRONTEND_DIR=/custom/path
+EOF
+chmod 644 /etc/skel/.config/filemanager/config.yaml"
+
+# Create config for existing users (if they don't have one)
+for home_dir in /home/*; do
+    if [ -d "$home_dir" ]; then
+        user_config_dir="$home_dir/.config/filemanager"
+        if [ ! -d "$user_config_dir" ]; then
+            mkdir -p "$user_config_dir"
+            cp /etc/skel/.config/filemanager/config.yaml "$user_config_dir/"
+            
+            # Get username and set ownership
+            username=$(basename "$home_dir")
+            chown -R "$username:$username" "$user_config_dir"
+            chmod 755 "$user_config_dir"
+            chmod 644 "$user_config_dir/config.yaml"
+        fi
+    fi
+done
+
+# Verify installation
+echo "✅ Verifying installation..."
+if [ -d "$FRONTEND_DIR" ] && [ -f "$FRONTEND_DIR/index.html" ]; then
+    echo "✅ Frontend directory verified: $FRONTEND_DIR"
+else
+    echo "⚠️  Warning: Frontend files may not be properly installed"
+fi
+
+if [ -f "$CONFIG_DIR/config.yaml" ]; then
+    echo "✅ System config verified: $CONFIG_DIR/config.yaml"
+fi
+
+echo ""
+echo "=========================================="
+echo "✅ FileManager installation complete!"
+echo ""
+echo "📂 Frontend location: $FRONTEND_DIR"
+echo "⚙️  System config: $CONFIG_DIR/config.yaml"
+echo "👤 User config: ~/.config/filemanager/config.yaml"
+echo ""
+echo "🚀 To run FileManager:"
+echo "   filemanager          # CLI mode"
+echo "   filemanager --web    # Web interface"
+echo "   filemanager --help   # Show help"
+echo ""
+echo "🔍 To check frontend location:"
+echo "   filemanager --frontend-info"
+echo ""
+
+exit 0
