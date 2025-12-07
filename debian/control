@@ -2,9 +2,9 @@ Package: filemanager
 Version: 2.0.2
 Section: utils
 Priority: optional
-Architecture: amd64
-Maintainer: Your Name <you@example.com>
-Homepage: https://github.com/yourusername/filemanager
+Architecture: any
+Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
+Homepage: https://github.com/devonionrouting4Moses/fileManager
 Depends: libc6 (>= 2.31)
 Description: Cross-platform file management tool
  FileManager provides both CLI and web interface for file operations.
