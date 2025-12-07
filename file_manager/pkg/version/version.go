@@ -168,17 +168,18 @@ func displayStyledVersionCheck(versionInfo string) {
 	cyan := "\033[36m"   // Cyan (#4cc9f0)
 	reset := "\033[0m"
 	bold := "\033[1m"
+
+	// Calculate box width based on content
 	boxWidth := 60
+	if versionInfo != "" && len(versionInfo) > boxWidth-4 {
+		boxWidth = len(versionInfo) + 4
+	}
 
 	fmt.Printf("\n%s%s┌%s┐%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
-	fmt.Printf("%s%s│ 🔍 Checking for updates...%s │%s\n", purple, bold, strings.Repeat(" ", 31), reset)
+	fmt.Printf("%s%s│ 🔍 Checking for updates...%s │%s\n", purple, bold, strings.Repeat(" ", boxWidth-31), reset)
 	fmt.Printf("%s%s├%s┤%s\n", purple, bold, strings.Repeat("─", boxWidth-2), reset)
-	fmt.Printf("%s%s│ %sUsing cached update information...%s │%s\n", cyan, bold, "", strings.Repeat(" ", 24), reset)
+	fmt.Printf("%s%s│ %sUsing cached update information...%s │%s\n", cyan, bold, "", strings.Repeat(" ", boxWidth-37), reset)
 	if versionInfo != "" {
-		// Truncate if too long
-		if len(versionInfo) > boxWidth-4 {
-			versionInfo = versionInfo[:boxWidth-7] + "..."
-		}
 		padding := boxWidth - len(versionInfo) - 2
 		if padding < 0 {
 			padding = 0
@@ -205,9 +206,10 @@ func CheckForUpdatesWithPrompt(showPrompts bool) {
 		if time.Since(cached.LastCheck) < 24*time.Hour {
 			// Build version info message
 			currentVersion := "v" + Version
-			comparison := compareVersions(cached.ReleaseInfo.TagName, currentVersion)
+			comparison := compareVersions(currentVersion, cached.ReleaseInfo.TagName)
 			var versionInfo string
-			if comparison < 0 {
+			if comparison > 0 {
+				// Current version is newer than latest stable = pre-release/candidate
 				versionInfo = fmt.Sprintf("ℹ️  You're running a pre-release version (%s, latest stable: %s)", currentVersion, cached.ReleaseInfo.TagName)
 			}
 			displayStyledVersionCheck(versionInfo)
@@ -274,9 +276,10 @@ func CheckForUpdatesWithPrompt(showPrompts bool) {
 // handleUpdateWithManager handles updates using the update manager
 func handleUpdateWithManager(release ReleaseInfo, showPrompts bool) {
 	currentVersion := "v" + Version
-	comparison := compareVersions(release.TagName, currentVersion)
+	comparison := compareVersions(currentVersion, release.TagName)
 
-	if comparison > 0 {
+	if comparison < 0 {
+		// Current version is older than latest stable = update available
 		// Create notification
 		notification, err := CreateUpdateNotification(release)
 		if err != nil {
@@ -297,7 +300,8 @@ func handleUpdateWithManager(release ReleaseInfo, showPrompts bool) {
 		if updateApplied {
 			fmt.Println(manager.GetUpdateSummary())
 		}
-	} else if comparison < 0 {
+	} else if comparison > 0 {
+		// Current version is newer than latest stable = pre-release/candidate
 		// Only show pre-release message if prompts are enabled (not during startup check)
 		if showPrompts {
 			fmt.Printf("ℹ️  You're running a pre-release version (v%s, latest stable: %s)\n", Version, release.TagName)
@@ -311,9 +315,10 @@ func handleUpdateWithManager(release ReleaseInfo, showPrompts bool) {
 
 func displayUpdateInfo(release ReleaseInfo) {
 	currentVersion := "v" + Version
-	comparison := compareVersions(release.TagName, currentVersion)
+	comparison := compareVersions(currentVersion, release.TagName)
 
-	if comparison > 0 {
+	if comparison < 0 {
+		// Current version is older than latest stable = update available
 		// Use new semantic versioning notification system
 		notification, err := CreateUpdateNotification(release)
 		if err != nil {
@@ -342,7 +347,8 @@ func displayUpdateInfo(release ReleaseInfo) {
 
 		// Show update summary
 		fmt.Println(notification.GetUpdateSummary())
-	} else if comparison < 0 {
+	} else if comparison > 0 {
+		// Current version is newer than latest stable = pre-release/candidate
 		fmt.Printf("ℹ️  You're running a pre-release version (v%s, latest stable: %s)\n", Version, release.TagName)
 	} else {
 		fmt.Printf("✅ You're running the latest version (v%s)\n", Version)

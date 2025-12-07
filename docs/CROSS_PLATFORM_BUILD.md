@@ -91,7 +91,7 @@ file filemanager-arm64
 #!/bin/bash
 # Create DEB package structure
 
-VERSION="2.0.0"
+VERSION="2.0.2"
 ARCH="amd64"
 
 # Create directory structure
@@ -108,7 +108,7 @@ chmod +x deb/usr/local/bin/filemanager
 # Create control file
 cat > deb/DEBIAN/control << 'EOF'
 Package: filemanager
-Version: 2.0.0
+Version: 2.0.2
 Architecture: amd64
 Maintainer: DevChigarlicMoses <moses.muranja@strathmore.edu>
 Description: Modern file manager with Rust+Go backend
@@ -151,7 +151,7 @@ dpkg -c filemanager_${VERSION}_${ARCH}.deb
 #!/bin/bash
 # Create TAR.GZ distribution
 
-VERSION="2.0.0"
+VERSION="2.0.2"
 ARCH="amd64"
 
 # Create distribution directory
@@ -194,7 +194,7 @@ echo "✅ Created: filemanager-${VERSION}-linux-${ARCH}.tar.gz"
 # Build snap (see SNAP_BUILD_GUIDE.md for details)
 snapcraft
 
-# Result: filemanager_2.0.0_amd64.snap
+# Result: filemanager_2.0.2_amd64.snap
 ```
 
 ### 4. APT Repository Package
@@ -203,10 +203,10 @@ snapcraft
 # The DEB package can be added to an APT repository
 # For now, the DEB package can be installed directly:
 
-sudo dpkg -i filemanager_2.0.0_amd64.deb
+sudo dpkg -i filemanager_2.0.2_amd64.deb
 
 # Or with apt:
-sudo apt install ./filemanager_2.0.0_amd64.deb
+sudo apt install ./filemanager_2.0.2_amd64.deb
 ```
 
 ### 5. Arch Linux Package (PKGBUILD)
@@ -218,7 +218,7 @@ sudo apt install ./filemanager_2.0.0_amd64.deb
 mkdir -p arch
 cat > arch/PKGBUILD << 'EOF'
 pkgname=filemanager
-pkgver=2.0.0
+pkgver=2.0.2
 pkgrel=1
 pkgdesc="Modern file manager with Rust+Go backend"
 arch=('x86_64' 'aarch64')
@@ -332,7 +332,7 @@ filemanager.exe --version
 #!/bin/bash
 # Create ZIP distribution
 
-VERSION="2.0.0"
+VERSION="2.0.2"
 
 # Create distribution directory
 mkdir -p dist/filemanager-${VERSION}-windows-amd64
@@ -383,13 +383,13 @@ echo "✅ Created: filemanager-${VERSION}-windows-amd64.zip"
 # Download from: https://nsis.sourceforge.io/
 
 # Create installer script (filemanager.nsi)
-cat > installer/filemanager.nsi << 'EOF'
+cat > windows/filemanager.nsi << 'EOF'
 ; FileManager Installer Script
 
 !include "MUI2.nsh"
 
-Name "FileManager v2.0.0"
-OutFile "filemanager-2.0.0-installer.exe"
+Name "FileManager v2.0.2"
+OutFile "filemanager-2.0.2-installer.exe"
 InstallDir "$PROGRAMFILES\FileManager"
 
 !insertmacro MUI_PAGE_DIRECTORY
@@ -424,9 +424,9 @@ SectionEnd
 EOF
 
 # Build installer
-makensis installer/filemanager.nsi
+makensis windows/filemanager.nsi
 
-# Result: filemanager-2.0.0-installer.exe
+# Result: filemanager-2.0.2-installer.exe
 ```
 
 ---
@@ -490,10 +490,10 @@ cd ..
 
 ```bash
 # Same as Linux TAR.GZ, but with macOS binary
-mkdir -p dist/filemanager-2.0.0-macos-amd64
-cp filemanager dist/filemanager-2.0.0-macos-amd64/
-cp rust_ffi/target/release/libfs_operations_core.dylib dist/filemanager-2.0.0-macos-amd64/
-tar czf filemanager-2.0.0-macos-amd64.tar.gz dist/filemanager-2.0.0-macos-amd64/
+mkdir -p dist/filemanager-2.0.2-macos-amd64
+cp filemanager dist/filemanager-2.0.2-macos-amd64/
+cp rust_ffi/target/release/libfs_operations_core.dylib dist/filemanager-2.0.2-macos-amd64/
+tar czf filemanager-2.0.2-macos-amd64.tar.gz dist/filemanager-2.0.2-macos-amd64/
 ```
 
 #### DMG (Disk Image)
@@ -508,7 +508,7 @@ cp rust_ffi/target/release/libfs_operations_core.dylib dmg-staging/
 hdiutil create -volname "FileManager" \
   -srcfolder dmg-staging \
   -ov -format UDZO \
-  filemanager-2.0.0-macos-amd64.dmg
+  filemanager-2.0.2-macos-amd64.dmg
 ```
 
 #### Homebrew Formula
@@ -519,7 +519,7 @@ cat > filemanager.rb << 'EOF'
 class Filemanager < Formula
   desc "Modern file manager with Rust+Go backend"
   homepage "https://github.com/devonionrouting4Moses/fileManager"
-  url "https://github.com/devonionrouting4Moses/fileManager/archive/v2.0.0.tar.gz"
+  url "https://github.com/devonionrouting4Moses/fileManager/archive/v2.0.2.tar.gz"
   sha256 "YOUR_SHA256_HERE"
   license "MIT"
 
@@ -621,7 +621,7 @@ Create `build-all.sh` (or `build-all.bat` for Windows):
 ```bash
 #!/bin/bash
 
-VERSION="2.0.0"
+VERSION="2.0.2"
 PROJECT_ROOT=$(pwd)
 
 echo "🔨 Building FileManager v${VERSION} for all platforms..."

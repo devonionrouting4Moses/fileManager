@@ -297,7 +297,7 @@ func StartWebServer() error {
 		// System installs: frontend MUST be pre-bundled
 		if !isValidDir(frontendDir) {
 			box.StopColorRotation()
-			return fmt.Errorf("system installation error: frontend not found at %s\nThis is a packaging error - frontend should be bundled during installation.", frontendDir)
+			return fmt.Errorf("system installation error: frontend not found at %s\n This is a packaging error - frontend should be bundled during installation.", frontendDir)
 		}
 
 		// Verify critical files exist
@@ -353,6 +353,7 @@ func StartWebServer() error {
 	http.HandleFunc("/api/operation", HandleOperation)
 	http.HandleFunc("/api/templates", HandleTemplates)
 	http.HandleFunc("/api/health", HandleHealth)
+	http.HandleFunc("/api/version", HandleVersion)
 
 	port := "8080"
 	url := fmt.Sprintf("http://localhost:%s", port)

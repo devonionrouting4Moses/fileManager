@@ -5,12 +5,20 @@
 
 set -e
 
-VERSION="2.0.0"
 APP_NAME="filemanager"
 BUILD_DIR="dist"
 RUST_DIR="../rust_ffi"
 GO_DIR="../file_manager"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Read version from VERSION file
+if [ -f "$PROJECT_ROOT/VERSION" ]; then
+    VERSION=$(cat "$PROJECT_ROOT/VERSION" | tr -d ' \n')
+else
+    VERSION="2.0.0"
+    echo "⚠️  VERSION file not found, using default: $VERSION"
+fi
 
 # Colors
 GREEN='\033[0;32m'

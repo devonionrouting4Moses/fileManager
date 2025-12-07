@@ -26,7 +26,7 @@
 ### New Files
 
 #### Version Management
-- **`VERSION`** - Single source of truth (currently: 2.0.0)
+- **`VERSION`** - Single source of truth (currently: 2.0.2)
 - **`scripts/version-manager.sh`** - Version management tool
 - **`VERSION_MANAGEMENT.md`** - Complete version guide
 - **`DYNAMIC_VERSION_SYSTEM.md`** - Dynamic version overview
@@ -82,25 +82,25 @@ cd file_manager_v1/scripts
 
 ### Linux amd64
 ```
-filemanager_2.0.0_amd64.deb
-filemanager-2.0.0-linux-amd64.tar.gz
-filemanager-apt_2.0.0_amd64.deb
+filemanager_2.0.2_amd64.deb
+filemanager-2.0.2-linux-amd64.tar.gz
+filemanager-apt_2.0.2_amd64.deb
 arch/PKGBUILD
 ```
 
 ### Linux arm64
 ```
-filemanager_2.0.0_arm64.deb
-filemanager-2.0.0-linux-arm64.tar.gz
-filemanager-apt_2.0.0_arm64.deb
+filemanager_2.0.2_arm64.deb
+filemanager-2.0.2-linux-arm64.tar.gz
+filemanager-apt_2.0.2_arm64.deb
 arch-arm64/PKGBUILD
 ```
 
 ### Windows amd64
 ```
 filemanager.exe
-filemanager-2.0.0-windows-amd64.zip
-dist/filemanager-2.0.0-windows-amd64/install.bat
+filemanager-2.0.2-windows-amd64.zip
+dist/filemanager-2.0.2-windows-amd64/install.bat
 ```
 
 ## 🔧 System Requirements

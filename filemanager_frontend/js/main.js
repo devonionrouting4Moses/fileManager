@@ -4,8 +4,31 @@ const API_URL = 'http://localhost:8080/api';
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('FileManager Web Interface loaded!');
+    loadVersion();
     loadTemplates();
 });
+
+// Load and display application version
+async function loadVersion() {
+    try {
+        const response = await fetch(`${API_URL}/version`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const versionDisplay = document.getElementById('version-display');
+        if (versionDisplay && data.version) {
+            versionDisplay.textContent = data.version;
+        }
+    } catch (error) {
+        console.warn('Could not fetch version from server:', error);
+        // Fallback to a default version if API is not available
+        const versionDisplay = document.getElementById('version-display');
+        if (versionDisplay) {
+            versionDisplay.textContent = 'unknown';
+        }
+    }
+}
 
 // Load available templates
 async function loadTemplates() {

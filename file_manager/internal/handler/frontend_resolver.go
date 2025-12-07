@@ -419,49 +419,145 @@ func CreateDefaultUserConfig(frontendDir string) error {
 	return nil
 }
 
-// PrintFrontendInfo prints diagnostic information about frontend location
+// PrintFrontendInfo prints diagnostic information about frontend location in a styled box
 func PrintFrontendInfo() {
-	fmt.Println("🔍 Frontend Directory Resolution Info:")
-	fmt.Println(strings.Repeat("─", 50))
+	// Build the info lines
+	var lines []string
+	lines = append(lines, "🔍 Frontend Directory Resolution Info")
+	lines = append(lines, "")
 
 	// 1. Environment variable
 	if envDir := os.Getenv("FILEMANAGER_FRONTEND_DIR"); envDir != "" {
-		fmt.Printf("1️⃣  ENV FILEMANAGER_FRONTEND_DIR: %s [%s]\n", envDir, getPathStatus(envDir))
+		lines = append(lines, fmt.Sprintf("1️⃣  ENV FILEMANAGER_FRONTEND_DIR: %s [%s]\n", envDir, getPathStatus(envDir)))
 	} else {
-		fmt.Println("1️⃣  ENV FILEMANAGER_FRONTEND_DIR: (not set)")
+		lines = append(lines, "1️⃣  ENV FILEMANAGER_FRONTEND_DIR: (not set)")
 	}
 
 	// 2. User config
-	userConfigPath := getUserConfigPath()
 	userConfigDir := getUserConfigFrontendDir()
 	if userConfigDir != "" {
-		fmt.Printf("2️⃣  User Config (%s): %s [%s]\n", userConfigPath, userConfigDir, getPathStatus(userConfigDir))
+		lines = append(lines, fmt.Sprintf("2️⃣  User Config: %s [%s]", userConfigDir, getPathStatus(userConfigDir)))
 	} else {
-		fmt.Printf("2️⃣  User Config (%s): (not configured)\n", userConfigPath)
+		lines = append(lines, fmt.Sprintf("2️⃣  User Config ($s): (not configured), userConfigPath: %s", getUserConfigPath()))
 	}
 
 	// 3. System config
-	systemConfigPath := getSystemConfigPath()
 	systemConfigDir := getSystemConfigFrontendDir()
 	if systemConfigDir != "" {
-		fmt.Printf("3️⃣  System Config (%s): %s [%s]\n", systemConfigPath, systemConfigDir, getPathStatus(systemConfigDir))
+		lines = append(lines, fmt.Sprintf("3️⃣  System Config: %s [%s]", systemConfigDir, getPathStatus(systemConfigDir)))
 	} else {
-		fmt.Printf("3️⃣  System Config (%s): (not configured)\n", systemConfigPath)
+		lines = append(lines, fmt.Sprintf("3️⃣  System Config ($s): (not configured), systemConfigPath: %s", getSystemConfigPath()))
 	}
 
 	// 4. OS default
 	defaultDir := getOSDefaultFrontendDir()
-	fmt.Printf("4️⃣  OS Default: %s [%s]\n", defaultDir, getPathStatus(defaultDir))
+	lines = append(lines, fmt.Sprintf("4️⃣  OS Default: %s [%s]\n", defaultDir, getPathStatus(defaultDir)))
 
 	// 5. Portable fallback
 	portableDir := getPortableFrontendDir()
-	fmt.Printf("5️⃣  Portable Fallback: %s [%s]\n", portableDir, getPathStatus(portableDir))
-
-	fmt.Println(strings.Repeat("─", 50))
+	lines = append(lines, fmt.Sprintf("5️⃣  Portable Fallback: %s [%s]\n", portableDir, getPathStatus(portableDir)))
 
 	// Show which one will be used
 	frontendDir, _ := GetFrontendDir()
-	fmt.Printf("✅ Active Frontend: %s\n", frontendDir)
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("✅ Active: %s", frontendDir))
+
+	// Print in a styled box
+	printStyledBox("Frontend Info", lines)
+}
+
+// printStyledBox prints content in a rounded corner box with cyan color
+func printStyledBox(title string, lines []string) {
+	// ANSI color codes (cyan)
+	border := "\033[36m"       // Cyan
+	titleColor := "\033[1;36m" // Bright Cyan
+	textColor := "\033[36m"    // Cyan
+	reset := "\033[0m"
+
+	// Calculate box width based on longest content
+	maxWidth := len(title) + 4
+	for _, line := range lines {
+		// Account for ANSI codes in length calculation
+		visibleLen := len(stripANSI(line))
+		if visibleLen > maxWidth {
+			maxWidth = visibleLen
+		}
+	}
+	if maxWidth < 50 {
+		maxWidth = 50
+	}
+
+	var output strings.Builder
+
+	// Top border with rounded corners
+	output.WriteString(border)
+	output.WriteString("╭")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("╮\n")
+
+	// Title
+	titlePadding := (maxWidth - len(stripANSI(title))) / 2
+	output.WriteString(titleColor)
+	output.WriteString("│")
+	for i := 0; i < titlePadding; i++ {
+		output.WriteString(" ")
+	}
+	output.WriteString(title)
+	for i := 0; i < maxWidth-titlePadding-len(stripANSI(title)); i++ {
+		output.WriteString(" ")
+	}
+	output.WriteString("│\n")
+
+	// Separator
+	output.WriteString(border)
+	output.WriteString("├")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("┤\n")
+
+	// Log messages
+	output.WriteString(textColor)
+	for _, line := range lines {
+		output.WriteString("│ ")
+		output.WriteString(line)
+		// Pad to fill width
+		visibleLen := len(stripANSI(line))
+		padding := maxWidth - visibleLen - 1
+		for i := 0; i < padding; i++ {
+			output.WriteString(" ")
+		}
+		output.WriteString("│\n")
+	}
+
+	// Bottom border with rounded corners
+	output.WriteString(border)
+	output.WriteString("╰")
+	for i := 0; i < maxWidth; i++ {
+		output.WriteString("─")
+	}
+	output.WriteString("╯\n")
+	output.WriteString(reset)
+
+	fmt.Print(output.String())
+}
+
+// stripANSI removes ANSI color codes from a string
+func stripANSI(s string) string {
+	var result strings.Builder
+	inEscape := false
+	for _, r := range s {
+		if r == '\033' {
+			inEscape = true
+		} else if inEscape && r == 'm' {
+			inEscape = false
+		} else if !inEscape {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
 }
 
 func getPathStatus(path string) string {
