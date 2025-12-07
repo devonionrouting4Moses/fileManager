@@ -131,6 +131,17 @@ set_version() {
         echo -e "${GREEN}✅ Updated windows/installer.nsi${NC}"
     fi
     
+    # Update Arch PKGBUILD files
+    if [ -f "$PROJECT_ROOT/arch/PKGBUILD" ]; then
+        sed -i "s/pkgver=[0-9]\+\.[0-9]\+\.[0-9]\+/pkgver=$new_version/" "$PROJECT_ROOT/arch/PKGBUILD"
+        echo -e "${GREEN}✅ Updated arch/PKGBUILD${NC}"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/arch-arm64/PKGBUILD" ]; then
+        sed -i "s/pkgver=[0-9]\+\.[0-9]\+\.[0-9]\+/pkgver=$new_version/" "$PROJECT_ROOT/arch-arm64/PKGBUILD"
+        echo -e "${GREEN}✅ Updated arch-arm64/PKGBUILD${NC}"
+    fi
+    
     # Update documentation files version
     if [ -f "$PROJECT_ROOT/IMPLEMENTATION_COMPLETE.md" ]; then
         sed -i "s/\*\*Version\*\*: [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version\*\*: $new_version/" "$PROJECT_ROOT/IMPLEMENTATION_COMPLETE.md"
@@ -250,6 +261,14 @@ list_versions() {
     
     echo -e "${YELLOW}Windows installer:${NC}"
     grep "VIProductVersion" "$PROJECT_ROOT/windows/installer.nsi" 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}Arch PKGBUILD:${NC}"
+    grep "^pkgver=" "$PROJECT_ROOT/arch/PKGBUILD" 2>/dev/null || echo "  Not found"
+    echo ""
+    
+    echo -e "${YELLOW}Arch ARM64 PKGBUILD:${NC}"
+    grep "^pkgver=" "$PROJECT_ROOT/arch-arm64/PKGBUILD" 2>/dev/null || echo "  Not found"
 }
 
 # Main logic
