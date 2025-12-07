@@ -3,7 +3,6 @@ set -e
 
 # Get the project root (parent of scripts directory)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_ROOT"
 
 # Read version from VERSION file
 if [ -f "$PROJECT_ROOT/VERSION" ]; then
@@ -12,7 +11,6 @@ else
     VERSION="2.0.0"
     echo "⚠️  VERSION file not found, using default: $VERSION"
 fi
-
 ARCH="amd64"
 
 echo "🔨 Building FileManager v${VERSION} for Linux amd64..."

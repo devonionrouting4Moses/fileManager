@@ -384,6 +384,22 @@ func HandleHealth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleVersion returns the application version
+func HandleVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"version": version.GetVersion(),
+	})
+}
+
 func respondError(w http.ResponseWriter, message string, statusCode int) {
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(APIResponse{

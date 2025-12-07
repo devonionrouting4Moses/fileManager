@@ -157,6 +157,9 @@ set_version() {
         echo -e "${GREEN}✅ Updated FRONTEND_BUNDLING_INDEX.md${NC}"
     fi
     
+    # Note: Frontend version is now dynamically fetched from the API
+    # The index.html no longer has a hardcoded version
+    
     echo -e "${GREEN}🎉 Version updated to $new_version${NC}"
     echo ""
     echo "Files updated:"

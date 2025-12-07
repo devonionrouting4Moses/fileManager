@@ -3,7 +3,6 @@ set -e
 
 # Get the project root (parent of scripts directory)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_ROOT"
 
 # Read version from VERSION file
 if [ -f "$PROJECT_ROOT/VERSION" ]; then
