@@ -1,0 +1,5 @@
+# FileManager v2.0.2 - arm64 Checksums
+# Generated: Mon Dec  8 10:49:36 EAT 2025
+
+DMG_SHA256_ARM64="bf2a7ae6b3e5c994db5852a0d3faf3056ac034471cee2f95743b0334788ba02c"
+TAR_SHA256_ARM64="e6d36f40af273c47d29fd274a1688f6f1b8acd9fc03bbd3b3624f4e13d762f86"

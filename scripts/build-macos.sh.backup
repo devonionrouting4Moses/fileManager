@@ -46,72 +46,57 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
-# Create architecture-specific output directories
-MACOS_DIR="${PROJECT_ROOT}/macos"
-MACOS_DIST_DIR="${MACOS_DIR}/dist"
-ARCH_DIR="${MACOS_DIST_DIR}/${ARCH}"
-
-echo "📁 Creating directory structure..."
-echo "   MACOS_DIR: ${MACOS_DIR}"
-echo "   ARCH_DIR: ${ARCH_DIR}"
-
-mkdir -p "${MACOS_DIR}"
-mkdir -p "${MACOS_DIST_DIR}"
-mkdir -p "${ARCH_DIR}"
-
 # Add Rust target if needed
 echo "📦 Adding macOS ${ARCH} target to Rust..."
 rustup target add ${TARGET} 2>/dev/null || true
 
 # Build Rust library for macOS
 echo "🦀 Building Rust library for macOS ${ARCH}..."
-cd "${PROJECT_ROOT}/rust_ffi"
+cd "$PROJECT_ROOT/rust_ffi"
 cargo build --release --target ${TARGET} -p fs-operations-core
-cd "${PROJECT_ROOT}"
+cd "$PROJECT_ROOT"
 
 # Verify Rust library was built
-if [ ! -f "${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" ]; then
+if [ ! -f "$PROJECT_ROOT/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" ]; then
     echo "❌ ERROR: Rust library not found at rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib"
     echo ""
     echo "Available files in rust_ffi/target/${TARGET}/release/:"
-    ls -la "${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release/" 2>/dev/null || echo "Directory not found"
+    ls -la "$PROJECT_ROOT/rust_ffi/target/${TARGET}/release/" 2>/dev/null || echo "Directory not found"
     exit 1
 fi
 echo "✅ Rust library built: rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib"
 
 # Build Go binary for macOS
 echo "🐹 Building Go binary for macOS ${ARCH}..."
-cd "${PROJECT_ROOT}/file_manager"
-
-BINARY_OUTPUT="${MACOS_DIR}/filemanager-macos-${ARCH}"
+cd "$PROJECT_ROOT/file_manager"
 
 if [ "$ARCH" = "amd64" ]; then
     GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
-      CGO_LDFLAGS="-L${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release -lfs_operations_core -framework CoreFoundation -framework Security" \
-      go build -ldflags="-s -w" -o "${BINARY_OUTPUT}" ./cmd/app
+      CGO_LDFLAGS="-L$PROJECT_ROOT/rust_ffi/target/${TARGET}/release -lfs_operations_core -framework CoreFoundation -framework Security" \
+      go build -ldflags="-s -w" -o "$PROJECT_ROOT/filemanager-macos-${ARCH}" ./cmd/app
 else
     GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
-      CGO_LDFLAGS="-L${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release -lfs_operations_core -framework CoreFoundation -framework Security" \
-      go build -ldflags="-s -w" -o "${BINARY_OUTPUT}" ./cmd/app
+      CGO_LDFLAGS="-L$PROJECT_ROOT/rust_ffi/target/${TARGET}/release -lfs_operations_core -framework CoreFoundation -framework Security" \
+      go build -ldflags="-s -w" -o "$PROJECT_ROOT/filemanager-macos-${ARCH}" ./cmd/app
 fi
-cd "${PROJECT_ROOT}"
+cd "$PROJECT_ROOT"
 
-echo "✅ Binary built: macos/filemanager-macos-${ARCH}"
+echo "✅ Binary built: ./filemanager-macos-${ARCH}"
 
 # Create macOS .app bundle
 echo "📦 Creating macOS application bundle..."
 APP_NAME="FileManager.app"
-APP_DIR="${ARCH_DIR}/${APP_NAME}"
+APP_DIR="$PROJECT_ROOT/dist/${APP_NAME}"
 mkdir -p "${APP_DIR}/Contents/MacOS"
 mkdir -p "${APP_DIR}/Contents/Resources"
 mkdir -p "${APP_DIR}/Contents/Frameworks"
 
 # Copy binary
-cp "${BINARY_OUTPUT}" "${APP_DIR}/Contents/MacOS/filemanager"
+cp "$PROJECT_ROOT/filemanager-macos-${ARCH}" "${APP_DIR}/Contents/MacOS/filemanager"
 chmod +x "${APP_DIR}/Contents/MacOS/filemanager"
 
 # Copy Rust library
-cp "${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" "${APP_DIR}/Contents/Frameworks/"
+cp "$PROJECT_ROOT/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" "${APP_DIR}/Contents/Frameworks/"
 
 # Update library paths in binary
 install_name_tool -change \
@@ -120,10 +105,10 @@ install_name_tool -change \
     "${APP_DIR}/Contents/MacOS/filemanager"
 
 # Bundle frontend files
-if [ -d "${PROJECT_ROOT}/filemanager_frontend" ]; then
+if [ -d "$PROJECT_ROOT/filemanager_frontend" ]; then
     echo "📂 Bundling frontend files..."
     mkdir -p "${APP_DIR}/Contents/Resources/frontend"
-    cp -r "${PROJECT_ROOT}/filemanager_frontend"/* "${APP_DIR}/Contents/Resources/frontend/"
+    cp -r "$PROJECT_ROOT/filemanager_frontend"/* "${APP_DIR}/Contents/Resources/frontend/"
 else
     echo "⚠️  Frontend directory not found, skipping frontend bundling"
 fi
@@ -167,7 +152,7 @@ echo "✅ Application bundle created: ${APP_DIR}"
 # Create DMG installer
 echo "📦 Creating DMG installer..."
 DMG_NAME="FileManager-${VERSION}-macos-${ARCH}.dmg"
-DMG_TEMP_DIR="${ARCH_DIR}/dmg-temp"
+DMG_TEMP_DIR="$PROJECT_ROOT/dist/dmg-temp"
 mkdir -p "${DMG_TEMP_DIR}"
 
 # Copy app to temp directory
@@ -178,7 +163,7 @@ ln -s /Applications "${DMG_TEMP_DIR}/Applications"
 
 # Create README
 cat > "${DMG_TEMP_DIR}/README.txt" << EOFREADME
-FileManager v${VERSION} (${ARCH})
+FileManager v${VERSION}
 
 Installation:
 1. Drag FileManager.app to the Applications folder
@@ -194,8 +179,9 @@ EOFREADME
 
 # Create DMG
 if command -v hdiutil &> /dev/null; then
-    hdiutil create -volname "FileManager" -srcfolder "${DMG_TEMP_DIR}" -ov -format UDZO "${ARCH_DIR}/${DMG_NAME}"
-    echo "✅ DMG installer created: macos/dist/${ARCH}/${DMG_NAME}"
+    # Create temporary DMG
+    hdiutil create -volname "FileManager" -srcfolder "${DMG_TEMP_DIR}" -ov -format UDZO "$PROJECT_ROOT/dist/${DMG_NAME}"
+    echo "✅ DMG installer created: dist/${DMG_NAME}"
 else
     echo "⚠️  hdiutil not found, skipping DMG creation"
 fi
@@ -205,25 +191,20 @@ rm -rf "${DMG_TEMP_DIR}"
 
 # Create TAR.GZ archive
 echo "📦 Creating TAR.GZ archive..."
-TAR_DIR_NAME="filemanager-${VERSION}-macos-${ARCH}"
-TAR_DIR="${ARCH_DIR}/${TAR_DIR_NAME}"
-mkdir -p "${TAR_DIR}"
-
-# Copy files to tar directory
-cp "${BINARY_OUTPUT}" "${TAR_DIR}/filemanager"
-cp "${PROJECT_ROOT}/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" "${TAR_DIR}/"
-cp "${PROJECT_ROOT}/README.md" "${TAR_DIR}/" 2>/dev/null || true
-cp "${PROJECT_ROOT}/LICENSE" "${TAR_DIR}/" 2>/dev/null || true
+mkdir -p "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}"
+cp "$PROJECT_ROOT/filemanager-macos-${ARCH}" "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/filemanager"
+cp "$PROJECT_ROOT/rust_ffi/target/${TARGET}/release/libfs_operations_core.dylib" "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/"
+cp "$PROJECT_ROOT/README.md" "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/" 2>/dev/null || true
+cp "$PROJECT_ROOT/LICENSE" "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/" 2>/dev/null || true
 
 # Bundle frontend in tar.gz
-if [ -d "${PROJECT_ROOT}/filemanager_frontend" ]; then
-    mkdir -p "${TAR_DIR}/frontend"
-    cp -r "${PROJECT_ROOT}/filemanager_frontend"/* "${TAR_DIR}/frontend/"
+if [ -d "$PROJECT_ROOT/filemanager_frontend" ]; then
+    mkdir -p "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/frontend"
+    cp -r "$PROJECT_ROOT/filemanager_frontend"/* "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/frontend/"
 fi
 
 # Create install script
-INSTALL_SCRIPT="${TAR_DIR}/install.sh"
-cat > "${INSTALL_SCRIPT}" << 'EOFINSTALL'
+cat > "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/install.sh" << 'EOFINSTALL'
 #!/bin/bash
 set -e
 echo "Installing FileManager..."
@@ -249,13 +230,46 @@ fi
 echo "✅ FileManager installed successfully!"
 echo "Run 'filemanager' from terminal to start"
 EOFINSTALL
-chmod +x "${INSTALL_SCRIPT}"
+chmod +x "$PROJECT_ROOT/dist/filemanager-${VERSION}-macos-${ARCH}/install.sh"
 
-# Create tar.gz
-cd "${ARCH_DIR}"
-tar czf "${TAR_DIR_NAME}.tar.gz" "${TAR_DIR_NAME}/"
-cd "${PROJECT_ROOT}"
-echo "✅ TAR.GZ archive created: macos/dist/${ARCH}/${TAR_DIR_NAME}.tar.gz"
+cd "$PROJECT_ROOT/dist"
+tar czf "filemanager-${VERSION}-macos-${ARCH}.tar.gz" "filemanager-${VERSION}-macos-${ARCH}/"
+cd "$PROJECT_ROOT"
+echo "✅ TAR.GZ archive created: dist/filemanager-${VERSION}-macos-${ARCH}.tar.gz"
+
+# Create install script
+cat > "$TAR_DIR/install.sh" << 'EOFINSTALL'
+#!/bin/bash
+set -e
+echo "Installing FileManager..."
+
+# Check if running with sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run with sudo: sudo ./install.sh"
+    exit 1
+fi
+
+# Copy binary to /usr/local/bin
+cp filemanager /usr/local/bin/
+chmod +x /usr/local/bin/filemanager
+
+# Copy library to /usr/local/lib
+cp libfs_operations_core.dylib /usr/local/lib/
+
+# Update library search path
+if [ ! -f /etc/paths.d/filemanager ]; then
+    echo "/usr/local/lib" > /etc/paths.d/filemanager
+fi
+
+echo "✅ FileManager installed successfully!"
+echo "Run 'filemanager' from terminal to start"
+EOFINSTALL
+chmod +x "$TAR_DIR/install.sh"
+
+cd "$ARCH_DIR"
+tar czf "filemanager-${VERSION}-macos-${ARCH}.tar.gz" "filemanager-${VERSION}-macos-${ARCH}/"
+cd "$PROJECT_ROOT"
+echo "✅ TAR.GZ archive created: macos/dist/${ARCH}/filemanager-${VERSION}-macos-${ARCH}.tar.gz"
 
 # Code signing (optional, if developer certificate is available)
 if security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
@@ -267,39 +281,36 @@ else
     echo "   Users may need to allow the app in System Preferences > Security & Privacy"
 fi
 
+
 echo ""
 echo "🎉 macOS ${ARCH} build completed successfully!"
 echo ""
 echo "Files created in macos/dist/${ARCH}/:"
 echo "  - ${APP_NAME} (application bundle)"
 echo "  - ${DMG_NAME} (DMG installer)"
-echo "  - ${TAR_DIR_NAME}.tar.gz (portable archive)"
+echo "  - filemanager-${VERSION}-macos-${ARCH}.tar.gz (portable archive)"
 echo ""
 echo "Binary location:"
 echo "  - macos/filemanager-macos-${ARCH}"
 echo ""
 
 # Store checksums for later use
-CHECKSUMS_FILE="${MACOS_DIST_DIR}/checksums-${ARCH}.txt"
+CHECKSUMS_FILE="$MACOS_DIST_DIR/checksums-${ARCH}.txt"
 echo "📝 Calculating checksums..."
-echo "# FileManager v${VERSION} - ${ARCH} Checksums" > "${CHECKSUMS_FILE}"
-echo "# Generated: $(date)" >> "${CHECKSUMS_FILE}"
-echo "" >> "${CHECKSUMS_FILE}"
+echo "# FileManager v${VERSION} - ${ARCH} Checksums" > "$CHECKSUMS_FILE"
+echo "# Generated: $(date)" >> "$CHECKSUMS_FILE"
+echo "" >> "$CHECKSUMS_FILE"
 
-# Convert arch to uppercase for variable names (bash 3.2 compatible)
-ARCH_UPPER=$(echo "${ARCH}" | tr '[:lower:]' '[:upper:]')
-
-if [ -f "${ARCH_DIR}/${DMG_NAME}" ]; then
-    DMG_SHA=$(shasum -a 256 "${ARCH_DIR}/${DMG_NAME}" | cut -d' ' -f1)
-    echo "DMG_SHA256_${ARCH_UPPER}=\"${DMG_SHA}\"" >> "${CHECKSUMS_FILE}"
+if [ -f "$ARCH_DIR/${DMG_NAME}" ]; then
+    DMG_SHA=$(shasum -a 256 "$ARCH_DIR/${DMG_NAME}" | cut -d' ' -f1)
+    echo "DMG_SHA256_${ARCH^^}=\"${DMG_SHA}\"" >> "$CHECKSUMS_FILE"
     echo "DMG: ${DMG_SHA}"
 fi
 
-if [ -f "${ARCH_DIR}/${TAR_DIR_NAME}.tar.gz" ]; then
-    TAR_SHA=$(shasum -a 256 "${ARCH_DIR}/${TAR_DIR_NAME}.tar.gz" | cut -d' ' -f1)
-    echo "TAR_SHA256_${ARCH_UPPER}=\"${TAR_SHA}\"" >> "${CHECKSUMS_FILE}"
+if [ -f "$ARCH_DIR/filemanager-${VERSION}-macos-${ARCH}.tar.gz" ]; then
+    TAR_SHA=$(shasum -a 256 "$ARCH_DIR/filemanager-${VERSION}-macos-${ARCH}.tar.gz" | cut -d' ' -f1)
+    echo "TAR_SHA256_${ARCH^^}=\"${TAR_SHA}\"" >> "$CHECKSUMS_FILE"
     echo "TAR.GZ: ${TAR_SHA}"
 fi
 
 echo "✅ Checksums saved to: macos/dist/checksums-${ARCH}.txt"
-echo ""
