@@ -6,10 +6,10 @@ class Filemanager < Formula
 
   if Hardware::CPU.intel?
     url "https://github.com/devonionrouting4Moses/fileManager/releases/download/v2.0.2/filemanager-2.0.2-macos-amd64.tar.gz"
-    sha256 "REPLACE_WITH_AMD64_SHA256"
+    sha256 "763af349eaee1a9dba16f75047dbc1d3bb178fa76d8e67f90785a59088b228cd"
   elsif Hardware::CPU.arm?
     url "https://github.com/devonionrouting4Moses/fileManager/releases/download/v2.0.2/filemanager-2.0.2-macos-arm64.tar.gz"
-    sha256 "REPLACE_WITH_ARM64_SHA256"
+    sha256 "e6d36f40af273c47d29fd274a1688f6f1b8acd9fc03bbd3b3624f4e13d762f86"
   end
 
   def install

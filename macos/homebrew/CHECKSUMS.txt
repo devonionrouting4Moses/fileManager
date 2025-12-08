@@ -1,0 +1,16 @@
+FileManager v2.0.2 - Build Checksums
+Generated: Mon Dec  8 10:49:36 EAT 2025
+
+=== DMG Files (for Cask) ===
+AMD64 (Intel):    c17f21ac63d941a79776cbf98ab352e0a442f71bf2073605733f1ed5fb4bc295
+ARM64 (M1/M2/M3): bf2a7ae6b3e5c994db5852a0d3faf3056ac034471cee2f95743b0334788ba02c
+
+=== TAR.GZ Files (for Formula) ===
+AMD64 (Intel):    763af349eaee1a9dba16f75047dbc1d3bb178fa76d8e67f90785a59088b228cd
+ARM64 (M1/M2/M3): e6d36f40af273c47d29fd274a1688f6f1b8acd9fc03bbd3b3624f4e13d762f86
+
+=== File Locations ===
+DMG AMD64:    macos/dist/amd64/FileManager-2.0.2-macos-amd64.dmg
+DMG ARM64:    macos/dist/arm64/FileManager-2.0.2-macos-arm64.dmg
+TAR.GZ AMD64: macos/dist/amd64/filemanager-2.0.2-macos-amd64.tar.gz
+TAR.GZ ARM64: macos/dist/arm64/filemanager-2.0.2-macos-arm64.tar.gz
